@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/Romasmi/social-network/internal/config"
 	"github.com/Romasmi/social-network/internal/database"
@@ -60,9 +61,8 @@ func (a *App) Run() {
 	})
 	origins := handlers.AllowedOrigins([]string{"*"})
 
-	// 		":"+strconv.Itoa(int(a.Config.Server.Port)),
 	err := http.ListenAndServe(
-		":8080",
+		":"+strconv.Itoa(int(a.Config.Server.Port)),
 		handlers.CORS(credentials, methods, origins, headers)(a.router))
 	if err != nil {
 		log.Fatalf("Server error: %v", err)
