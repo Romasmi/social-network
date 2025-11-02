@@ -3,8 +3,10 @@ module github.com/Romasmi/social-network
 go 1.25.1
 
 require (
+	github.com/felixge/httpsnoop v1.0.3 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
+	github.com/gorilla/handlers v1.5.2 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/jackc/pgx v3.6.2+incompatible // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
