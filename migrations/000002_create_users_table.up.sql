@@ -1,15 +1,10 @@
-CREATE TYPE gender AS ENUM ('male', 'female');
 CREATE TABLE users
 (
     id uuid PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    surname VARCHAR(255) NOT NULL,
-    birthdate DATE NOT NULL,
-    gender gender NOT NULL,
-    interests TEXT,
-    city uuid  NOT NULL,
-    CONSTRAINT FK_users_city
-    FOREIGN KEY (city) REFERENCES cities(id),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    is_active BOOLEAN DEFAULT true,
+    updated_at TIMESTAMP DEFAULT NOW(),
     created_at TIMESTAMP DEFAULT NOW()
 );
 

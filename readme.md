@@ -17,3 +17,11 @@ Specification : https://github.com/OtusTeam/highload/blob/master/homework/openap
 - /user/register
 - /user/get/{id}
 
+
+## Development
+
+### Migrations
+#### Create migration
+``` bash
+migrate create -ext sql -dir migrations -seq create_roles_stable
+```
