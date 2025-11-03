@@ -22,6 +22,7 @@ func RegisterRoutes(
 		panic("router must be initialized before routes registration")
 	}
 
+	RegisterAuthHandlers(router, db, config)
 	RegisterUserRoutes(router, db, config)
 
 	router.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
