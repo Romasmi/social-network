@@ -5,3 +5,8 @@ type User struct {
 	Email    string `json:"email"`
 	IsActive bool   `json:"isActive"`
 }
+
+type CreateUserPayload struct {
+	User
+	PasswordHash string
+}
