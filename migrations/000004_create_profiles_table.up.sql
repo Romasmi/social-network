@@ -6,13 +6,13 @@ CREATE TABLE profiles
     first_name VARCHAR(255) NOT NULL,
     second_name VARCHAR(255) NOT NULL,
     birthdate DATE NOT NULL,
-    gender gender NOT NULL,
+    gender gender DEFAULT NULL,
     biography TEXT,
-    city uuid  NOT NULL,
+    city_id uuid  NOT NULL,
     CONSTRAINT FK_profiles_user_id
         FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT FK_profiles_city
-        FOREIGN KEY (city) REFERENCES cities(id),
+        FOREIGN KEY (city_id) REFERENCES cities(id),
     created_at TIMESTAMP DEFAULT NOW()
 );
 
