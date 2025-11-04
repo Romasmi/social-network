@@ -16,14 +16,14 @@ type UserRepository struct {
 	db *pgxpool.Pool
 }
 
-const UsersTable = "users"
+const usersTable = "users"
 
 func (r *UserRepository) CreateUser(ctx context.Context, user *models.CreateUserPayload) (*models.User, error) {
 	query := fmt.Sprintf(`
-		INSERT INTO %v (id, email, password_hash, is_active)
+		INSERT INTO %s (id, email, password_hash, is_active)
 		VALUES ($1, $2, $3, $4)
 		RETURNING *
-	`, UsersTable)
+	`, usersTable)
 
 	var newUser *models.User
 
@@ -46,16 +46,17 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*mod
 		SELECT *
         FROM %v
 		WHERE email = '$1'
-	`, UsersTable)
+		LIMIT 1
+	`, usersTable)
 
-	var newUser *models.User
+	var user *models.User
 
-	err := r.db.QueryRow(ctx, query, email).Scan(&newUser)
+	err := r.db.QueryRow(ctx, query, email).Scan(&user)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
 		}
 		return nil, fmt.Errorf("failed to get url by %s: %w", email, err)
 	}
-	return newUser, nil
+	return user, nil
 }
