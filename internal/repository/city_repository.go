@@ -25,7 +25,7 @@ func (r *CityRepository) GetCityByName(ctx context.Context, name string) (*model
 	query := fmt.Sprintf(`
 		SELECT *
         FROM %v
-		WHERE name = '$1'
+		WHERE name = $1
 		LIMIT 1
 	`, citiesTable)
 
@@ -36,7 +36,7 @@ func (r *CityRepository) GetCityByName(ctx context.Context, name string) (*model
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("failed to get url by %s: %w", name, err)
+		return nil, fmt.Errorf("failed to get city by %s: %w\n", name, err)
 	}
 	return city, nil
 }

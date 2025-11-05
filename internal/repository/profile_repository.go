@@ -57,7 +57,7 @@ func (r *ProfileRepository) GetProfileByUserId(ctx context.Context, userId uuid.
 	query := fmt.Sprintf(`
 		SELECT *
         FROM %v
-		WHERE user_id = '$1'
+		WHERE user_id = $1
 		LIMIT 1
 	`, profilesTable)
 
@@ -68,7 +68,7 @@ func (r *ProfileRepository) GetProfileByUserId(ctx context.Context, userId uuid.
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("failed to get url by %s: %w", userId, err)
+		return nil, fmt.Errorf("failed to get profile by %s: %w", userId, err)
 	}
 	return profile, nil
 }

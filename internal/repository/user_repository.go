@@ -50,7 +50,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*mod
 	query := fmt.Sprintf(`
 		SELECT *
         FROM %v
-		WHERE email = '$1'
+		WHERE email = $1
 		LIMIT 1
 	`, usersTable)
 
@@ -70,7 +70,7 @@ func (r *UserRepository) GetUserById(ctx context.Context, userId uuid.UUID) (*mo
 	query := fmt.Sprintf(`
 		SELECT *
         FROM %v
-		WHERE id = '$1'
+		WHERE id = $1
 		LIMIT 1
 	`, usersTable)
 
