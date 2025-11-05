@@ -18,7 +18,11 @@ type UserRepository struct {
 
 const usersTable = "users"
 
-func (r *UserRepository) CreateUser(ctx context.Context, user *models.CreateUserPayload) (*models.User, error) {
+func CreateUserRepository(db *pgxpool.Pool) *UserRepository {
+	return &UserRepository{db: db}
+}
+
+func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) (*models.User, error) {
 	query := fmt.Sprintf(`
 		INSERT INTO %s (id, email, password_hash, is_active)
 		VALUES ($1, $2, $3, $4)

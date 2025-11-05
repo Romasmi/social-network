@@ -1,12 +1,10 @@
 package models
 
-type User struct {
-	ID       string `json:"id"`
-	Email    string `json:"email"`
-	IsActive bool   `json:"isActive"`
-}
+import "github.com/google/uuid"
 
-type CreateUserPayload struct {
-	User
-	PasswordHash string
+type User struct {
+	ID           uuid.UUID `json:"id"`
+	Email        string    `json:"email"`
+	IsActive     bool      `json:"isActive"`
+	PasswordHash string    `json:"-"`
 }

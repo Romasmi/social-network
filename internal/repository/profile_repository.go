@@ -18,6 +18,10 @@ type ProfileRepository struct {
 
 const profilesTable = "profiles"
 
+func CreateProfileRepository(db *pgxpool.Pool) *ProfileRepository {
+	return &ProfileRepository{db: db}
+}
+
 func (r *ProfileRepository) CreateProfile(ctx context.Context, profile *models.Profile) (*models.Profile, error) {
 	query := fmt.Sprintf(`
 		INSERT INTO %s (id, user_id, first_name, second_name, birthdate, gender, biagraphy, city_id)
@@ -34,7 +38,7 @@ func (r *ProfileRepository) CreateProfile(ctx context.Context, profile *models.P
 		profile.SecondName,
 		profile.Birthdate,
 		profile.Biography,
-		profile.City).Scan(&newProfile)
+		profile.CityId).Scan(&newProfile)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
