@@ -16,6 +16,10 @@ type CityRepository struct {
 
 const citiesTable = "cities"
 
+func CreateCityRepository(db *pgxpool.Pool) *CityRepository {
+	return &CityRepository{db: db}
+}
+
 // GetCityByName For simplicity assume that each city name is unique so it can return city by only single name
 func (r *CityRepository) GetCityByName(ctx context.Context, name string) (*models.City, error) {
 	query := fmt.Sprintf(`

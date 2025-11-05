@@ -8,3 +8,13 @@ type User struct {
 	IsActive     bool      `json:"isActive"`
 	PasswordHash string    `json:"-"`
 }
+
+type CreateUserModel struct {
+	FirstName  string `json:"first_name"`
+	SecondName string `json:"second_name"`
+	Birthdate  string `json:"birthdate"` // format 2017-02-01
+	Biography  string `json:"biography"`
+	Gender     Gender `json:"gender"`
+	City       string `json:"city"`
+	Password   string `json:"password"`
+}
