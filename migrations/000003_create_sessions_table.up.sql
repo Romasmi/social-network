@@ -1,4 +1,4 @@
-CREATE TABLE sessions
+CREATE TABLE IF NOT EXISTS sessions
 (
     id uuid PRIMARY KEY,
     user_id uuid,
