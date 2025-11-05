@@ -13,8 +13,9 @@ import (
 
 func RegisterUserRoutes(router *mux.Router, db *pgxpool.Pool, cng *config.Config) {
 	cityRepo := repository.CreateCityRepository(db)
+	profileRepo := repository.CreateProfileRepository(db)
 	uow := repository.CreateUnitOfWork(db)
-	userService := services.CreateUserService(cityRepo, uow)
+	userService := services.CreateUserService(cityRepo, profileRepo, uow)
 	userHandler := user_handler.CreateUserHandler(userService)
 
 	privateRouter := router

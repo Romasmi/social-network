@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/Romasmi/social-network/internal/models"
+	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -52,7 +53,7 @@ func (r *ProfileRepository) CreateProfile(ctx context.Context, profile *models.P
 	return newProfile, nil
 }
 
-func (r *ProfileRepository) GetProfileByUserId(ctx context.Context, userId string) (*models.Profile, error) {
+func (r *ProfileRepository) GetProfileByUserId(ctx context.Context, userId uuid.UUID) (*models.Profile, error) {
 	query := fmt.Sprintf(`
 		SELECT *
         FROM %v

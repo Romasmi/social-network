@@ -10,12 +10,16 @@ import (
 )
 
 type UserService struct {
-	cityRepo *repository.CityRepository
-	uow      repository.UnitOfWork
+	cityRepo    *repository.CityRepository
+	profileRepo *repository.ProfileRepository
+	uow         repository.UnitOfWork
 }
 
-func CreateUserService(cityRepo *repository.CityRepository, uow repository.UnitOfWork) *UserService {
-	return &UserService{cityRepo: cityRepo, uow: uow}
+func CreateUserService(
+	cityRepo *repository.CityRepository,
+	profileRepo *repository.ProfileRepository,
+	uow repository.UnitOfWork) *UserService {
+	return &UserService{cityRepo: cityRepo, profileRepo: profileRepo, uow: uow}
 }
 
 func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreateUserModel) (*models.Profile, error) {
@@ -71,4 +75,8 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreateUs
 		return nil
 	})
 	return &newProfile, err
+}
+
+func (s *UserService) GetUser(ctx context.Context, userId uuid.UUID) (*models.Profile, error) {
+	return s.profileRepo.GetProfileByUserId(ctx, userId)
 }
