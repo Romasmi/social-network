@@ -22,25 +22,27 @@ func CreateCityRepository(db *pgxpool.Pool) *CityRepository {
 
 // GetCityByName For simplicity assume that each city name is unique so it can return city by only single name
 func (r *CityRepository) GetCityByName(ctx context.Context, name string) (*models.City, error) {
-	query := fmt.Sprintf(`
-		SELECT *
-        FROM %v
+	const query = `
+		SELECT id, name, country_code, state_province, created_at
+        FROM %s
 		WHERE name = $1
 		LIMIT 1
-	`, citiesTable)
+	`
+	sql := fmt.Sprintf(query, citiesTable)
 
-	rows, err := r.db.Query(ctx, query, name)
-	if err != nil {
-		return nil, fmt.Errorf("failed to query city by %s: %w", name, err)
-	}
-	defer rows.Close()
-
-	city, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.City])
+	city := &models.City{}
+	err := r.db.QueryRow(ctx, sql, name).Scan(
+		&city.ID,
+		&city.Name,
+		&city.CountryCode,
+		&city.StateProvince,
+		&city.CreatedAt,
+	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
 		}
 		return nil, fmt.Errorf("failed to get city by %s: %w", name, err)
 	}
-	return &city, nil
+	return city, nil
 }

@@ -11,15 +11,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func RegisterUserRoutes(router *mux.Router, db *pgxpool.Pool, cng *config.Config) {
+func RegisterUserRoutes(r *mux.Router, db *pgxpool.Pool, cng *config.Config) {
 	cityRepo := repository.CreateCityRepository(db)
 	profileRepo := repository.CreateProfileRepository(db)
 	uow := repository.CreateUnitOfWork(db)
 	userService := services.CreateUserService(cityRepo, profileRepo, uow)
 	userHandler := user_handler.CreateUserHandler(userService)
 
-	privateRouter := router
-
-	privateRouter.HandleFunc("/user/register", userHandler.RegisterUserHandler).Methods(http.MethodPost)
-	privateRouter.HandleFunc("/user/get/{userId}", userHandler.GetUserHandler).Methods(http.MethodGet)
+	r.HandleFunc("/user/register", userHandler.RegisterUserHandler).Methods(http.MethodPost)
+	r.HandleFunc("/user/get/{userId}", userHandler.GetUserHandler).Methods(http.MethodGet)
 }

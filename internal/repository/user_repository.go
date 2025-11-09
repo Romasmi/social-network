@@ -24,15 +24,21 @@ func CreateUserRepository(db *pgxpool.Pool) *UserRepository {
 }
 
 func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) (*models.User, error) {
-	query := fmt.Sprintf(`
+	const query = `
 		INSERT INTO %s (id, email, password_hash)
 		VALUES ($1, $2, $3)
-		RETURNING *
-	`, usersTable)
+		RETURNING id, email, password_hash, created_at
+	`
+	sql := fmt.Sprintf(query, usersTable)
 
-	var newUser *models.User
+	newUser := &models.User{}
+	err := r.db.QueryRow(ctx, sql, user.ID, user.Email, user.PasswordHash).Scan(
+		&user.ID,
+		&user.Email,
+		&user.PasswordHash,
+		&user.CreatedAt,
+	)
 
-	err := r.db.QueryRow(ctx, query, user.ID, user.Email, user.PasswordHash).Scan(&newUser)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -41,47 +47,32 @@ func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) (*mo
 			}
 			return nil, err
 		}
-		return nil, err
+		return nil, fmt.Errorf("failed to create user: %w", err)
 	}
 	return newUser, nil
 }
 
-func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
-	query := fmt.Sprintf(`
-		SELECT *
-        FROM %v
-		WHERE email = $1
-		LIMIT 1
-	`, usersTable)
-
-	var user *models.User
-
-	err := r.db.QueryRow(ctx, query, email).Scan(&user)
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrNotFound
-		}
-		return nil, fmt.Errorf("failed to user url by %s: %w", email, err)
-	}
-	return user, nil
-}
-
 func (r *UserRepository) GetUserById(ctx context.Context, userId uuid.UUID) (*models.User, error) {
-	query := fmt.Sprintf(`
-		SELECT *
+	const query = `
+		SELECT id, email, password_hash, created_at
         FROM %v
 		WHERE id = $1
 		LIMIT 1
-	`, usersTable)
+	`
+	sql := fmt.Sprintf(query, usersTable)
 
-	var user *models.User
-
-	err := r.db.QueryRow(ctx, query, userId).Scan(&user)
+	user := &models.User{}
+	err := r.db.QueryRow(ctx, sql, userId).Scan(
+		&user.ID,
+		&user.Email,
+		&user.PasswordHash,
+		&user.CreatedAt,
+	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("failed to get user by %s: %w", userId, err)
+		return nil, fmt.Errorf("failed to get user by user id: %w", err)
 	}
 	return user, nil
 }

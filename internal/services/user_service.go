@@ -24,7 +24,7 @@ func CreateUserService(
 	return &UserService{cityRepo: cityRepo, profileRepo: profileRepo, uow: uow}
 }
 
-func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreateUserModel) (*models.Profile, error) {
+func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreateProfileModel) (*models.Profile, error) {
 	userId, err := uuid.NewV7()
 	if err != nil {
 		return nil, err
@@ -59,6 +59,7 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreateUs
 	newProfile.Gender = payload.Gender
 	newProfile.Biography = payload.Biography
 	newProfile.CityId = city.ID
+	newProfile.City = city.Name
 
 	userRepo := s.uow.User()
 	profileRepo := s.uow.Profile()
@@ -79,6 +80,6 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreateUs
 	return &newProfile, err
 }
 
-func (s *UserService) GetUser(ctx context.Context, userId uuid.UUID) (*models.Profile, error) {
-	return s.profileRepo.GetProfileByUserId(ctx, userId)
+func (s *UserService) GetUserByProfileId(ctx context.Context, profileId uuid.UUID) (*models.Profile, error) {
+	return s.profileRepo.GetProfileByProfileId(ctx, profileId)
 }
