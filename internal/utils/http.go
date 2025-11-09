@@ -11,8 +11,8 @@ func ErrorInvalidRequestBody(w http.ResponseWriter, err error) {
 }
 
 func JsonResponse(w http.ResponseWriter, output interface{}) {
-	err := json.NewEncoder(w).Encode(output)
 	w.Header().Set("Content-Type", "application/json")
+	err := json.NewEncoder(w).Encode(output)
 	if err != nil {
 		fmt.Printf("error while encoding response: %v\n", err)
 		JsonError(w, fmt.Errorf("internal error"))

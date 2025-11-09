@@ -59,6 +59,7 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreatePr
 	newProfile.Gender = payload.Gender
 	newProfile.Biography = payload.Biography
 	newProfile.CityId = city.ID
+	newProfile.City = city.Name
 
 	userRepo := s.uow.User()
 	profileRepo := s.uow.Profile()

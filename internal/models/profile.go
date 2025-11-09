@@ -15,7 +15,7 @@ const (
 
 type Profile struct {
 	ID         uuid.UUID `json:"id"`
-	UserId     uuid.UUID `json:"userId"`
+	UserId     uuid.UUID `json:"-"`
 	FirstName  string    `json:"firstName"`
 	SecondName string    `json:"secondName"`
 	Birthdate  time.Time `json:"birthdate"`
