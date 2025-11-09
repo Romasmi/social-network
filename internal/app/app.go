@@ -50,10 +50,6 @@ func (a *App) init(configPath string) error {
 	return nil
 }
 
-func (a *App) OnStop() {
-
-}
-
 func (a *App) Run() error {
 	credentials := handlers.AllowCredentials()
 	methods := handlers.AllowedMethods([]string{
