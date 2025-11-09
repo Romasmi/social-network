@@ -12,8 +12,9 @@ After start Api will be available at http://localhost:8000
 ```
 
 ### Or run `make` file
-
-
+```shell
+make local 
+```
 
 ## Requirements
 ### Functional
