@@ -1,10 +1,12 @@
 package routes
 
 import (
-	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/Romasmi/social-network/internal/config"
+	"github.com/Romasmi/social-network/internal/middleware"
+	"github.com/Romasmi/social-network/internal/utils"
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -21,19 +23,13 @@ func RegisterRoutes(
 	if router == nil {
 		panic("router must be initialized before routes registration")
 	}
+	router.Use(middleware.ResponseHeadersMiddleware)
+	router.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
 
 	RegisterAuthHandlers(router, db, config)
 	RegisterUserRoutes(router, db, config)
-
-	router.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
 }
 
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotFound)
-	response := &NotFoundResponse{Error: "Route Not found"}
-	err := json.NewEncoder(w).Encode(response)
-	if err != nil {
-		http.Error(w, "Unable to encode response", http.StatusInternalServerError)
-		return
-	}
+	utils.JsonError(w, http.StatusNotFound, fmt.Errorf("undefined route"))
 }
