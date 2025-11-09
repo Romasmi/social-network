@@ -32,7 +32,7 @@ func (m *AuthMiddleware) Process(next http.Handler) http.Handler {
 		token := authFields[1]
 		sessionId, err := uuid.Parse(token)
 		if err != nil {
-			utils.JsonError(w, http.StatusForbidden, nil)
+			utils.ErrorInvalidRequestBody(w, fmt.Errorf("invalid token"))
 			return
 		}
 

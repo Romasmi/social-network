@@ -21,7 +21,7 @@ func JsonResponse(w http.ResponseWriter, statusCode int, output interface{}) {
 }
 
 func ErrorInvalidRequestBody(w http.ResponseWriter, err error) {
-	JsonError(w, http.StatusBadRequest, fmt.Errorf("invalid request body, %s", err.Error()))
+	JsonError(w, http.StatusBadRequest, fmt.Errorf("invalid request body: %s", err.Error()))
 }
 
 func SuccessJsonResponse(w http.ResponseWriter, output interface{}) {
