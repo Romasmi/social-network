@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 
@@ -27,7 +28,8 @@ func main() {
 		return
 	}
 	err = m.Up()
-	if err != nil {
+
+	if err != nil && !errors.Is(err, migrate.ErrNoChange) {
 		fmt.Printf("error while running up migrations: %v\n", err)
 		return
 	}

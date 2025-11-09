@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/Romasmi/social-network/internal/models"
+	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -24,7 +25,7 @@ func CreateProfileRepository(db *pgxpool.Pool) *ProfileRepository {
 
 func (r *ProfileRepository) CreateProfile(ctx context.Context, profile *models.Profile) (*models.Profile, error) {
 	query := fmt.Sprintf(`
-		INSERT INTO %s (id, user_id, first_name, second_name, birthdate, gender, biagraphy, city_id)
+		INSERT INTO %s (id, user_id, first_name, second_name, birthdate, gender, biography, city_id)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`, profilesTable)
 	var newProfile *models.Profile
@@ -37,6 +38,7 @@ func (r *ProfileRepository) CreateProfile(ctx context.Context, profile *models.P
 		profile.FirstName,
 		profile.SecondName,
 		profile.Birthdate,
+		profile.Gender,
 		profile.Biography,
 		profile.CityId).Scan(&newProfile)
 	if err != nil {
@@ -52,11 +54,11 @@ func (r *ProfileRepository) CreateProfile(ctx context.Context, profile *models.P
 	return newProfile, nil
 }
 
-func (r *ProfileRepository) GetProfileByUserId(ctx context.Context, userId string) (*models.Profile, error) {
+func (r *ProfileRepository) GetProfileByUserId(ctx context.Context, userId uuid.UUID) (*models.Profile, error) {
 	query := fmt.Sprintf(`
 		SELECT *
         FROM %v
-		WHERE user_id = '$1'
+		WHERE user_id = $1
 		LIMIT 1
 	`, profilesTable)
 
@@ -67,7 +69,7 @@ func (r *ProfileRepository) GetProfileByUserId(ctx context.Context, userId strin
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("failed to get url by %s: %w", userId, err)
+		return nil, fmt.Errorf("failed to get profile by %s: %w", userId, err)
 	}
 	return profile, nil
 }

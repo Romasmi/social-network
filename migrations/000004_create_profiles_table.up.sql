@@ -1,4 +1,3 @@
-CREATE TYPE gender AS ENUM ('male', 'female');
 CREATE TABLE profiles
 (
     id uuid PRIMARY KEY,
@@ -6,7 +5,7 @@ CREATE TABLE profiles
     first_name VARCHAR(255) NOT NULL,
     second_name VARCHAR(255) NOT NULL,
     birthdate DATE NOT NULL,
-    gender gender DEFAULT NULL,
+    gender VARCHAR(10) DEFAULT NULL,
     biography TEXT,
     city_id uuid  NOT NULL,
     CONSTRAINT FK_profiles_user_id

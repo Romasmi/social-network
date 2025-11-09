@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/Romasmi/social-network/internal/models"
+	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -24,8 +25,8 @@ func CreateUserRepository(db *pgxpool.Pool) *UserRepository {
 
 func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) (*models.User, error) {
 	query := fmt.Sprintf(`
-		INSERT INTO %s (id, email, password_hash, is_active)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO %s (id, email, password_hash)
+		VALUES ($1, $2, $3)
 		RETURNING *
 	`, usersTable)
 
@@ -49,7 +50,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*mod
 	query := fmt.Sprintf(`
 		SELECT *
         FROM %v
-		WHERE email = '$1'
+		WHERE email = $1
 		LIMIT 1
 	`, usersTable)
 
@@ -60,7 +61,27 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*mod
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("failed to get url by %s: %w", email, err)
+		return nil, fmt.Errorf("failed to user url by %s: %w", email, err)
+	}
+	return user, nil
+}
+
+func (r *UserRepository) GetUserById(ctx context.Context, userId uuid.UUID) (*models.User, error) {
+	query := fmt.Sprintf(`
+		SELECT *
+        FROM %v
+		WHERE id = $1
+		LIMIT 1
+	`, usersTable)
+
+	var user *models.User
+
+	err := r.db.QueryRow(ctx, query, userId).Scan(&user)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to get user by %s: %w", userId, err)
 	}
 	return user, nil
 }
