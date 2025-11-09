@@ -25,8 +25,8 @@ func CreateUserRepository(db *pgxpool.Pool) *UserRepository {
 
 func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) (*models.User, error) {
 	query := fmt.Sprintf(`
-		INSERT INTO %s (id, email, password_hash, is_active)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO %s (id, email, password_hash)
+		VALUES ($1, $2, $3)
 		RETURNING *
 	`, usersTable)
 

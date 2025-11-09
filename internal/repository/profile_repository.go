@@ -25,7 +25,7 @@ func CreateProfileRepository(db *pgxpool.Pool) *ProfileRepository {
 
 func (r *ProfileRepository) CreateProfile(ctx context.Context, profile *models.Profile) (*models.Profile, error) {
 	query := fmt.Sprintf(`
-		INSERT INTO %s (id, user_id, first_name, second_name, birthdate, gender, biagraphy, city_id)
+		INSERT INTO %s (id, user_id, first_name, second_name, birthdate, gender, biography, city_id)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`, profilesTable)
 	var newProfile *models.Profile
@@ -38,6 +38,7 @@ func (r *ProfileRepository) CreateProfile(ctx context.Context, profile *models.P
 		profile.FirstName,
 		profile.SecondName,
 		profile.Birthdate,
+		profile.Gender,
 		profile.Biography,
 		profile.CityId).Scan(&newProfile)
 	if err != nil {

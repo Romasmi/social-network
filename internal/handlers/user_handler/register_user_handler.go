@@ -39,12 +39,13 @@ func (h *UserHandler) RegisterUserHandler(w http.ResponseWriter, r *http.Request
 	}
 	profile, err := h.userService.RegisterUser(r.Context(), payload.toModel())
 	if err != nil {
-		fmt.Printf("error while user registration: %v", err)
+		fmt.Printf("error while user registration: %v\n", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
 	}
 	err = json.NewEncoder(w).Encode(profile)
 	if err != nil {
-		fmt.Printf("error while encoding response: %v", err)
+		fmt.Printf("error while encoding response: %v\n", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}

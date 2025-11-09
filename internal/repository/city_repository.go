@@ -29,14 +29,18 @@ func (r *CityRepository) GetCityByName(ctx context.Context, name string) (*model
 		LIMIT 1
 	`, citiesTable)
 
-	var city *models.City
+	rows, err := r.db.Query(ctx, query, name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query city by %s: %w", name, err)
+	}
+	defer rows.Close()
 
-	err := r.db.QueryRow(ctx, query, name).Scan(&city)
+	city, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[models.City])
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("failed to get city by %s: %w\n", name, err)
+		return nil, fmt.Errorf("failed to get city by %s: %w", name, err)
 	}
-	return city, nil
+	return &city, nil
 }
