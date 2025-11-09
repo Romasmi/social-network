@@ -15,7 +15,7 @@ func (h *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userId, err := uuid.Parse(vars["userId"])
 	if err != nil {
-		utils.JsonError(w, fmt.Errorf("invalid user id"))
+		utils.ErrorInvalidRequestBody(w, fmt.Errorf("invalid user id"))
 		return
 	}
 
@@ -27,9 +27,9 @@ func (h *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		fmt.Printf("error while retreiving a user: %v\n", err)
-		utils.JsonError(w, fmt.Errorf("internal error"))
+		utils.JsonInternalServerError(w)
 		return
 	}
 
-	utils.JsonResponse(w, profile)
+	utils.SuccessJsonResponse(w, profile)
 }
