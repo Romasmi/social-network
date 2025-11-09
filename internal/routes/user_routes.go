@@ -15,13 +15,21 @@ import (
 func RegisterUserRoutes(r *mux.Router, db *pgxpool.Pool, cng *config.Config) {
 	cityRepo := repository.CreateCityRepository(db)
 	profileRepo := repository.CreateProfileRepository(db)
+	sessionRepo := repository.CreateSessionRepository(db)
+
 	uow := repository.CreateUnitOfWork(db)
+
 	userService := services.CreateUserService(cityRepo, profileRepo, uow)
+	sessionService := services.CreateSessionService(sessionRepo)
+
 	userHandler := user_handler.CreateUserHandler(userService)
 
 	r.HandleFunc("/user/register", userHandler.RegisterUserHandler).Methods(http.MethodPost)
 
 	privateRoute := r.PathPrefix("/").Subrouter()
-	privateRoute.Use(middleware.AuthMiddleware)
+
+	authMiddleware := middleware.CreateAuthMiddleware(sessionService)
+
+	privateRoute.Use(authMiddleware.Process)
 	privateRoute.HandleFunc("/user/get/{userId}", userHandler.GetUserHandler).Methods(http.MethodGet)
 }
