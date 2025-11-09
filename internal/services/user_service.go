@@ -2,9 +2,11 @@ package services
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Romasmi/social-network/internal/models"
 	"github.com/Romasmi/social-network/internal/repository"
+	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -44,7 +46,7 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreateUs
 	}
 	var newUser models.User
 	newUser.ID = userId
-	newUser.Email = ""
+	newUser.Email = gofakeit.Email() // Generate email just as example
 	newUser.IsActive = true
 	newUser.PasswordHash = string(passwordHash)
 
@@ -64,12 +66,12 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreateUs
 	err = s.uow.WithTransaction(ctx, func(ctx context.Context) error {
 		_, err = userRepo.CreateUser(ctx, &newUser)
 		if err != nil {
-			return err
+			return fmt.Errorf("can't create user: %v", err)
 		}
 
 		profile, err := profileRepo.CreateProfile(ctx, &newProfile)
 		if err != nil {
-			return err
+			return fmt.Errorf("can't create profile: %v", err)
 		}
 		profile.City = city.Name
 		return nil

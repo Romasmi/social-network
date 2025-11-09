@@ -14,6 +14,7 @@ require (
 )
 
 require (
+	github.com/brianvoe/gofakeit/v7 v7.9.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
