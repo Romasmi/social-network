@@ -37,6 +37,10 @@ func (payload *CreateUserRequest) toModel() (*models.CreateProfileModel, error) 
 	}, nil
 }
 
+/*
+Note: according to the specification there is not unique identifier for the user like email
+so on each request it creates a new user
+*/
 func (h *UserHandler) RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
 	var payload CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
