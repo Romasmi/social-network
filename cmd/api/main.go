@@ -32,6 +32,12 @@ func main() {
 		fmt.Printf("unable to create migrations driver: %v\n", err)
 		os.Exit(1)
 	}
+	defer func() {
+		if sourceErr, dbErr := m.Close(); sourceErr != nil || dbErr != nil {
+			fmt.Printf("Error closing migration driver - source: %v, db: %v\n", sourceErr, dbErr)
+		}
+	}()
+
 	err = m.Up()
 
 	if err != nil && !errors.Is(err, migrate.ErrNoChange) {

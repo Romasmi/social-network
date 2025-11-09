@@ -77,17 +77,26 @@ func (a *App) Run() error {
 }
 
 func (a *App) Shutdown(ctx context.Context) error {
-	var err error
+	var shutdownErr error
 
 	if a.server != nil {
+		fmt.Println("Shutting down HTTP server...")
 		if err := a.server.Shutdown(ctx); err != nil {
-			err = fmt.Errorf("server shutdown error: %w", err)
+			shutdownErr = fmt.Errorf("server shutdown error: %w", err)
+			fmt.Printf("HTTP server shutdown error: %v\n", err)
 		}
 	}
 
 	if a.DbConn != nil && a.DbConn.DB != nil {
-		a.DbConn.DB.Close()
+		fmt.Println("Closing database connections...")
+		select {
+		case <-ctx.Done():
+			fmt.Println("Shutdown timeout reached, forcing database close")
+		default:
+			a.DbConn.DB.Close()
+		}
 	}
 
-	return err
+	fmt.Println("Cleanup completed")
+	return shutdownErr
 }
