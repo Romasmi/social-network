@@ -5,6 +5,7 @@ import (
 
 	"github.com/Romasmi/social-network/internal/config"
 	"github.com/Romasmi/social-network/internal/handlers/user_handler"
+	"github.com/Romasmi/social-network/internal/middleware"
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/Romasmi/social-network/internal/services"
 	"github.com/gorilla/mux"
@@ -19,5 +20,8 @@ func RegisterUserRoutes(r *mux.Router, db *pgxpool.Pool, cng *config.Config) {
 	userHandler := user_handler.CreateUserHandler(userService)
 
 	r.HandleFunc("/user/register", userHandler.RegisterUserHandler).Methods(http.MethodPost)
-	r.HandleFunc("/user/get/{userId}", userHandler.GetUserHandler).Methods(http.MethodGet)
+
+	privateRoute := r.PathPrefix("/").Subrouter()
+	privateRoute.Use(middleware.AuthMiddleware)
+	privateRoute.HandleFunc("/user/get/{userId}", userHandler.GetUserHandler).Methods(http.MethodGet)
 }

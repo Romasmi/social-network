@@ -3,6 +3,7 @@ package services
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 
 	"github.com/Romasmi/social-network/internal/models"
@@ -40,4 +41,18 @@ func (s *SessionService) CreateSession(ctx context.Context, userId uuid.UUID, me
 
 func (s *SessionService) GetSessionById(ctx context.Context, id uuid.UUID) (*models.Session, error) {
 	return s.sessionRepo.GetSessionById(ctx, id)
+}
+
+func (s *SessionService) IsValidSession(ctx context.Context, sessionId uuid.UUID) (bool, error) {
+	session, err := s.sessionRepo.GetSessionById(ctx, sessionId)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	if time.Now().After(session.ExpiresAt) {
+		return false, nil
+	}
+	return true, nil
 }
