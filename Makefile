@@ -6,4 +6,6 @@ run:
 docker-up:
 	cd deployment/local && docker compose up -d
 
-local: docker-up run
+local: docker-up
+	@sleep 5
+	@$(MAKE) run
