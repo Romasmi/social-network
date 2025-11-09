@@ -11,7 +11,6 @@ type User struct {
 	Email        string    `json:"email"`
 	IsActive     bool      `json:"isActive"`
 	PasswordHash string    `json:"-"`
-	UpdateAt     time.Time `json:"updatedAt"`
 	CreatedAt    time.Time `json:"createdAt"`
 }
 
