@@ -7,12 +7,12 @@ import (
 )
 
 type User struct {
-	ID           uuid.UUID `json:"id" db:"id"`
-	Email        string    `json:"email" db:"email"`
-	IsActive     bool      `json:"isActive" db:"is_active"`
-	PasswordHash string    `json:"-" db:"password_hash"`
-	UpdateAt     time.Time `json:"updatedAt" db:"updated_at"`
-	CreatedAt    time.Time `json:"createdAt" db:"created_at"`
+	ID           uuid.UUID `json:"id"`
+	Email        string    `json:"email"`
+	IsActive     bool      `json:"isActive"`
+	PasswordHash string    `json:"-"`
+	UpdateAt     time.Time `json:"updatedAt"`
+	CreatedAt    time.Time `json:"createdAt"`
 }
 
 type CreateUserModel struct {

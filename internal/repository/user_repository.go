@@ -30,9 +30,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) (*mo
 		RETURNING *
 	`, usersTable)
 
-	var newUser *models.User
-
-	err := r.db.QueryRow(ctx, query, user.ID, user.Email, user.PasswordHash).Scan(&newUser)
+	newUser, err := scanUser(r.db.QueryRow(ctx, query, user.ID, user.Email, user.PasswordHash))
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -54,9 +52,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*mod
 		LIMIT 1
 	`, usersTable)
 
-	var user *models.User
-
-	err := r.db.QueryRow(ctx, query, email).Scan(&user)
+	user, err := scanUser(r.db.QueryRow(ctx, query, email))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
@@ -74,9 +70,7 @@ func (r *UserRepository) GetUserById(ctx context.Context, userId uuid.UUID) (*mo
 		LIMIT 1
 	`, usersTable)
 
-	var user *models.User
-
-	err := r.db.QueryRow(ctx, query, userId).Scan(&user)
+	user, err := scanUser(r.db.QueryRow(ctx, query, userId))
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
@@ -84,4 +78,16 @@ func (r *UserRepository) GetUserById(ctx context.Context, userId uuid.UUID) (*mo
 		return nil, fmt.Errorf("failed to get user by %s: %w", userId, err)
 	}
 	return user, nil
+}
+
+func scanUser(row pgx.Row) (*models.User, error) {
+	user := &models.User{}
+	return user, row.Scan(
+		&user.ID,
+		&user.Email,
+		&user.PasswordHash,
+		&user.IsActive,
+		&user.UpdateAt,
+		&user.CreatedAt,
+	)
 }
