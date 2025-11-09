@@ -80,6 +80,6 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreatePr
 	return &newProfile, err
 }
 
-func (s *UserService) GetUser(ctx context.Context, userId uuid.UUID) (*models.Profile, error) {
-	return s.profileRepo.GetProfileByUserId(ctx, userId)
+func (s *UserService) GetUserByProfileId(ctx context.Context, profileId uuid.UUID) (*models.Profile, error) {
+	return s.profileRepo.GetProfileByProfileId(ctx, profileId)
 }

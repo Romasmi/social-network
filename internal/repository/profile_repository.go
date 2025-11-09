@@ -65,17 +65,17 @@ func (r *ProfileRepository) CreateProfile(ctx context.Context, profile *models.P
 	return newProfile, nil
 }
 
-func (r *ProfileRepository) GetProfileByUserId(ctx context.Context, userId uuid.UUID) (*models.Profile, error) {
+func (r *ProfileRepository) GetProfileByProfileId(ctx context.Context, profileId uuid.UUID) (*models.Profile, error) {
 	const query = `
 		SELECT id, user_id, first_name, second_name, birthdate, gender, biography, city_id
         FROM %s
-		WHERE user_id = $1
+		WHERE id = $1
 		LIMIT 1
 	`
 	sql := fmt.Sprintf(query, profilesTable)
 
 	profile := &models.Profile{}
-	err := r.db.QueryRow(ctx, sql, userId).Scan(
+	err := r.db.QueryRow(ctx, sql, profileId).Scan(
 		&profile.ID,
 		&profile.UserId,
 		&profile.FirstName,
