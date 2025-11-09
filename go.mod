@@ -3,18 +3,19 @@ module github.com/Romasmi/social-network
 go 1.25.1
 
 require (
+	github.com/brianvoe/gofakeit/v7 v7.9.0
 	github.com/golang-migrate/migrate/v4 v4.19.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/handlers v1.5.2
 	github.com/gorilla/mux v1.8.1
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
 	github.com/jackc/pgx/v5 v5.7.6
+	github.com/pkg/errors v0.9.1
 	github.com/spf13/viper v1.21.0
 	golang.org/x/crypto v0.43.0
 )
 
 require (
-	github.com/brianvoe/gofakeit/v7 v7.9.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect

@@ -13,9 +13,9 @@ Create social network which allows to create and view user cards
 
 ## Endpoints
 Specification : https://github.com/OtusTeam/highload/blob/master/homework/openapi.json
-- /login
+- /login  (Returns bearer token)
 - /user/register
-- /user/get/{id}
+- /user/get/{id}   (Protected: use bearer token)
 
 
 ## Development

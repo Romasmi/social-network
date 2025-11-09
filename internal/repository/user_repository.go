@@ -55,9 +55,8 @@ func (r *UserRepository) CreateUser(ctx context.Context, user *models.User) (*mo
 func (r *UserRepository) GetUserById(ctx context.Context, userId uuid.UUID) (*models.User, error) {
 	const query = `
 		SELECT id, email, password_hash, created_at
-        FROM %v
+        FROM %s
 		WHERE id = $1
-		LIMIT 1
 	`
 	sql := fmt.Sprintf(query, usersTable)
 
@@ -72,7 +71,30 @@ func (r *UserRepository) GetUserById(ctx context.Context, userId uuid.UUID) (*mo
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("failed to get user by user id: %w", err)
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+	return user, nil
+}
+
+func (r *UserRepository) GetUserByProfileId(ctx context.Context, profileId uuid.UUID) (*models.User, error) {
+	const query = `
+		SELECT id, email, password_hash, created_at
+        FROM %s
+		WHERE id = (SELECT user_id FROM %s WHERE id = $1)
+	`
+	sql := fmt.Sprintf(query, usersTable, profilesTable)
+	user := &models.User{}
+	err := r.db.QueryRow(ctx, sql, profileId).Scan(
+		&user.ID,
+		&user.Email,
+		&user.PasswordHash,
+		&user.CreatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 	return user, nil
 }

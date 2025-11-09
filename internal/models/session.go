@@ -1,9 +1,16 @@
 package models
 
-import "github.com/google/uuid"
+import (
+	"encoding/json"
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Session struct {
-	ID       uuid.UUID   `json:"id"`
-	UserId   string      `json:"userId"`
-	Metadata interface{} `json:"metadata"`
+	ID        uuid.UUID       `json:"token"`
+	UserId    uuid.UUID       `json:"-"`
+	Metadata  json.RawMessage `json:"-"`
+	ExpiresAt time.Time       `json:"expiresAt"`
+	CreatedAt time.Time       `json:"-"`
 }

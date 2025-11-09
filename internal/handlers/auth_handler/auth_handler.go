@@ -1,14 +1,51 @@
 package auth_handler
 
-import "net/http"
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
+
+	"github.com/Romasmi/social-network/internal/services"
+	"github.com/Romasmi/social-network/internal/utils"
+	"github.com/google/uuid"
+)
 
 type AuthHandler struct {
+	AuthService *services.AuthService
 }
 
-func CreateAuthHandler() *AuthHandler {
-	return &AuthHandler{}
+type LoginRequest struct {
+	ID       string `json:"id"`
+	Password string `json:"password"`
+}
+
+func CreateAuthHandler(authService *services.AuthService) *AuthHandler {
+	return &AuthHandler{AuthService: authService}
 }
 
 func (h *AuthHandler) LoginHandler(w http.ResponseWriter, r *http.Request) {
+	var payload LoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		utils.ErrorInvalidRequestBody(w, err)
+		return
+	}
+	profileId, err := uuid.Parse(payload.ID)
+	if err != nil {
+		utils.ErrorInvalidRequestBody(w, err)
+		return
+	}
 
+	session, err := h.AuthService.LoginUser(r.Context(), profileId, payload.Password)
+	if err != nil {
+		if errors.Is(err, services.InvalidCredentialsError) {
+			utils.JsonError(w, http.StatusForbidden, err)
+			return
+		}
+
+		fmt.Printf("error while login user: %v\n", err)
+		utils.JsonInternalServerError(w)
+		return
+	}
+	utils.SuccessJsonResponse(w, session)
 }
