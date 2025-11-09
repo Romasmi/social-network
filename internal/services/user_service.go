@@ -24,7 +24,7 @@ func CreateUserService(
 	return &UserService{cityRepo: cityRepo, profileRepo: profileRepo, uow: uow}
 }
 
-func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreateUserModel) (*models.Profile, error) {
+func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreateProfileModel) (*models.Profile, error) {
 	userId, err := uuid.NewV7()
 	if err != nil {
 		return nil, err
