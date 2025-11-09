@@ -1,8 +1,9 @@
 package app
 
 import (
+	"context"
+	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -17,6 +18,7 @@ type App struct {
 	DbConn *database.DbConnection
 	Config *config.Config
 	router *mux.Router
+	server *http.Server
 }
 
 func CreateApp(configPath string) (*App, error) {
@@ -52,7 +54,7 @@ func (a *App) OnStop() {
 
 }
 
-func (a *App) Run() {
+func (a *App) Run() error {
 	credentials := handlers.AllowCredentials()
 	methods := handlers.AllowedMethods([]string{
 		http.MethodGet,
@@ -67,10 +69,29 @@ func (a *App) Run() {
 	})
 	origins := handlers.AllowedOrigins([]string{"*"})
 
-	err := http.ListenAndServe(
-		":"+strconv.Itoa(int(a.Config.Server.Port)),
-		handlers.CORS(credentials, methods, origins, headers)(a.router))
-	if err != nil {
-		log.Fatalf("Server error: %v", err)
+	a.server = &http.Server{
+		Addr:    ":" + strconv.Itoa(int(a.Config.Server.Port)),
+		Handler: handlers.CORS(credentials, methods, origins, headers)(a.router),
 	}
+
+	if err := a.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+	return nil
+}
+
+func (a *App) Shutdown(ctx context.Context) error {
+	var err error
+
+	if a.server != nil {
+		if err := a.server.Shutdown(ctx); err != nil {
+			err = fmt.Errorf("server shutdown error: %w", err)
+		}
+	}
+
+	if a.DbConn != nil && a.DbConn.DB != nil {
+		a.DbConn.DB.Close()
+	}
+
+	return err
 }
