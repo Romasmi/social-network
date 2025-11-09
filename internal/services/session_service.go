@@ -22,6 +22,7 @@ func CreateSessionService(sessionRepo *repository.SessionRepository) *SessionSer
 }
 
 func (s *SessionService) CreateSession(ctx context.Context, userId uuid.UUID, metadata json.RawMessage, ttl time.Duration) (*models.Session, error) {
+	// TODO invalidate previous sessions on new login
 	id, err := uuid.NewV7()
 	if err != nil {
 		return nil, err

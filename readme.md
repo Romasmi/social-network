@@ -3,6 +3,18 @@
 ## Goal
 Create social network which allows to create and view user cards
 
+## How to start
+Ensure port 8000 is available and you have docker installed.
+After start Api will be available at http://localhost:8000
+### Run up.sh
+```shell
+./up.sh
+```
+
+### Or run `make` file
+
+
+
 ## Requirements
 ### Functional
 - basic/bearer authorization
