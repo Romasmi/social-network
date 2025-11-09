@@ -78,7 +78,7 @@ func (r *UserRepository) GetUserById(ctx context.Context, userId uuid.UUID) (*mo
 
 func (r *UserRepository) GetUserByProfileId(ctx context.Context, profileId uuid.UUID) (*models.User, error) {
 	const query = `
-		SELECT id, first_name, last_name, city, created_at
+		SELECT id, email, password_hash, created_at
         FROM %s
 		WHERE id = (SELECT user_id FROM %s WHERE id = $1)
 	`

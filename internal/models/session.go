@@ -8,9 +8,9 @@ import (
 )
 
 type Session struct {
-	ID        uuid.UUID       `json:"id"`
+	ID        uuid.UUID       `json:"token"`
 	UserId    uuid.UUID       `json:"-"`
 	Metadata  json.RawMessage `json:"-"`
-	ExpiresAt time.Time       `json:"-"`
+	ExpiresAt time.Time       `json:"expiresAt"`
 	CreatedAt time.Time       `json:"-"`
 }

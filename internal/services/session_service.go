@@ -3,13 +3,14 @@ package services
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"time"
 
 	"github.com/Romasmi/social-network/internal/models"
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/google/uuid"
 )
+
+const DefaultSessionTTL = 24 * time.Hour
 
 type SessionService struct {
 	sessionRepo *repository.SessionRepository
@@ -20,10 +21,6 @@ func CreateSessionService(sessionRepo *repository.SessionRepository) *SessionSer
 }
 
 func (s *SessionService) CreateSession(ctx context.Context, userId uuid.UUID, metadata json.RawMessage, ttl time.Duration) (*models.Session, error) {
-	if ttl <= 0 {
-		return nil, errors.New("ttl must be greater than 0")
-	}
-
 	id, err := uuid.NewV7()
 	if err != nil {
 		return nil, err

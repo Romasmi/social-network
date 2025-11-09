@@ -13,7 +13,8 @@ import (
 
 func RegisterAuthHandlers(r *mux.Router, db *pgxpool.Pool, cng *config.Config) {
 	userRepo := repository.CreateUserRepository(db)
-	authService := services.CreateAuthService(userRepo)
+	sessionRepo := repository.CreateSessionRepository(db)
+	authService := services.CreateAuthService(userRepo, sessionRepo)
 
 	authHandler := auth_handler.CreateAuthHandler(authService)
 	r.HandleFunc("/login", authHandler.LoginHandler).Methods(http.MethodPost)
