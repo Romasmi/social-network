@@ -24,15 +24,17 @@ func CreateProfileRepository(db *pgxpool.Pool) *ProfileRepository {
 }
 
 func (r *ProfileRepository) CreateProfile(ctx context.Context, profile *models.Profile) (*models.Profile, error) {
-	query := fmt.Sprintf(`
+	const query = `
 		INSERT INTO %s (id, user_id, first_name, second_name, birthdate, gender, biography, city_id)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-	`, profilesTable)
-	var newProfile *models.Profile
+		RETURNING id, user_id, first_name, second_name, birthdate, gender, biography, city_id
+	`
+	sql := fmt.Sprintf(query, profilesTable)
 
+	newProfile := &models.Profile{}
 	err := r.db.QueryRow(
 		ctx,
-		query,
+		sql,
 		profile.ID,
 		profile.UserId,
 		profile.FirstName,
@@ -40,7 +42,16 @@ func (r *ProfileRepository) CreateProfile(ctx context.Context, profile *models.P
 		profile.Birthdate,
 		profile.Gender,
 		profile.Biography,
-		profile.CityId).Scan(&newProfile)
+		profile.CityId).Scan(
+		&newProfile.ID,
+		&newProfile.UserId,
+		&newProfile.FirstName,
+		&newProfile.SecondName,
+		&newProfile.Birthdate,
+		&newProfile.Gender,
+		&newProfile.Biography,
+		&newProfile.CityId,
+	)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
@@ -55,21 +66,30 @@ func (r *ProfileRepository) CreateProfile(ctx context.Context, profile *models.P
 }
 
 func (r *ProfileRepository) GetProfileByUserId(ctx context.Context, userId uuid.UUID) (*models.Profile, error) {
-	query := fmt.Sprintf(`
-		SELECT *
-        FROM %v
+	const query = `
+		SELECT id, user_id, first_name, second_name, birthdate, gender, biography, city_id
+        FROM %s
 		WHERE user_id = $1
 		LIMIT 1
-	`, profilesTable)
+	`
+	sql := fmt.Sprintf(query, profilesTable)
 
-	var profile *models.Profile
-
-	err := r.db.QueryRow(ctx, query, userId).Scan(&profile)
+	profile := &models.Profile{}
+	err := r.db.QueryRow(ctx, sql, userId).Scan(
+		&profile.ID,
+		&profile.UserId,
+		&profile.FirstName,
+		&profile.SecondName,
+		&profile.Birthdate,
+		&profile.Gender,
+		&profile.Biography,
+		&profile.CityId,
+	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("failed to get profile by %s: %w", userId, err)
+		return nil, fmt.Errorf("failed to get profile by user id: %w", err)
 	}
 	return profile, nil
 }
