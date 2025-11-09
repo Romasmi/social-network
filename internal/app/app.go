@@ -1,8 +1,9 @@
 package app
 
 import (
+	"context"
+	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -17,6 +18,7 @@ type App struct {
 	DbConn *database.DbConnection
 	Config *config.Config
 	router *mux.Router
+	server *http.Server
 }
 
 func CreateApp(configPath string) (*App, error) {
@@ -48,11 +50,7 @@ func (a *App) init(configPath string) error {
 	return nil
 }
 
-func (a *App) OnStop() {
-
-}
-
-func (a *App) Run() {
+func (a *App) Run() error {
 	credentials := handlers.AllowCredentials()
 	methods := handlers.AllowedMethods([]string{
 		http.MethodGet,
@@ -67,10 +65,38 @@ func (a *App) Run() {
 	})
 	origins := handlers.AllowedOrigins([]string{"*"})
 
-	err := http.ListenAndServe(
-		":"+strconv.Itoa(int(a.Config.Server.Port)),
-		handlers.CORS(credentials, methods, origins, headers)(a.router))
-	if err != nil {
-		log.Fatalf("Server error: %v", err)
+	a.server = &http.Server{
+		Addr:    ":" + strconv.Itoa(int(a.Config.Server.Port)),
+		Handler: handlers.CORS(credentials, methods, origins, headers)(a.router),
 	}
+
+	if err := a.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+		return err
+	}
+	return nil
+}
+
+func (a *App) Shutdown(ctx context.Context) error {
+	var shutdownErr error
+
+	if a.server != nil {
+		fmt.Println("Shutting down HTTP server...")
+		if err := a.server.Shutdown(ctx); err != nil {
+			shutdownErr = fmt.Errorf("server shutdown error: %w", err)
+			fmt.Printf("HTTP server shutdown error: %v\n", err)
+		}
+	}
+
+	if a.DbConn != nil && a.DbConn.DB != nil {
+		fmt.Println("Closing database connections...")
+		select {
+		case <-ctx.Done():
+			fmt.Println("Shutdown timeout reached, forcing database close")
+		default:
+			a.DbConn.DB.Close()
+		}
+	}
+
+	fmt.Println("Cleanup completed")
+	return shutdownErr
 }
