@@ -25,6 +25,7 @@ services:
       - "8000:8000"
     environment:
       - ENVIRONMENT=local
+      - DATABASE_URL=postgres://user:password@db:5432/social_network?sslmode=disable
     working_dir: /app
     restart: unless-stopped
     depends_on:
