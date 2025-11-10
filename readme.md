@@ -6,14 +6,16 @@ Create social network which allows to create and view user cards
 ## How to start
 Ensure port 8000 is available and you have docker installed.
 After start Api will be available at http://localhost:8000
-### Run up.sh
+
+### if you have goland 1.25.1^ locally
+
 ```shell
-./up.sh
+make local && go run cmd/api/main.go
 ```
 
-### Or run `make` file
+### If you don't have go 1.25.1^ locally
 ```shell
-make local 
+make local-full
 ```
 
 ## Requirements
