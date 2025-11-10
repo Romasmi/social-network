@@ -1,7 +1,7 @@
 .PHONY: run docker-up
 
 run:
-	cd cmd/api && go run main.go
+	go run cmd/api/main.go
 
 docker-up:
 	cd deployment/local && docker compose up -d
