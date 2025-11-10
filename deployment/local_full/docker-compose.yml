@@ -14,6 +14,25 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "./traefik.yml:/etc/traefik/traefik.yml:ro"
+  go-app:
+    build:
+      context: ../../
+      dockerfile: deployment/local_full/golang/Dockerfile
+    container_name: go-app
+    networks:
+      - social-network
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=local
+    working_dir: /app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.go-app.rule=Host(`localhost`)"
   db:
     image: "postgres:16-alpine"
     container_name: "social-network-db"

@@ -9,5 +9,5 @@ echo "Waiting for database to be ready..."
 sleep 5
 
 echo "Running Go app..."
-cd ../../cmd/api
-go run main.go
+cd ../../
+go run cmd/api/main.go

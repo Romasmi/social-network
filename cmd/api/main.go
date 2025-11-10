@@ -17,15 +17,21 @@ import (
 )
 
 func main() {
-	appInstance, err := app.CreateApp("../../")
+	basePath := os.Getenv("APP_BASE_PATH")
+	if basePath == "" {
+		basePath = "." // current directory
+	}
+
+	appInstance, err := app.CreateApp(basePath)
 	if err != nil {
 		fmt.Printf("error while app init: %v", err)
 		os.Exit(1)
 	}
 
-	path, _ := filepath.Abs("../../migrations")
+	migrationsPath := filepath.Join(basePath, "migrations")
+	absPath, _ := filepath.Abs(migrationsPath)
 	m, err := migrate.New(
-		"file://"+path,
+		"file://"+absPath,
 		appInstance.Config.Database.URL,
 	)
 	if m == nil || err != nil {
