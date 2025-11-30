@@ -39,9 +39,7 @@ func (a *App) importUserByLink(link string) error {
 	}
 
 	reader := csv.NewReader(resp.Body)
-	i := 0
 	for {
-		i++
 		record, err := reader.Read()
 		if err == io.EOF {
 			break
@@ -49,7 +47,6 @@ func (a *App) importUserByLink(link string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Println()
 
 		parsed, err := recordIntoModel(record)
 		if err != nil {
@@ -59,12 +56,7 @@ func (a *App) importUserByLink(link string) error {
 		if err != nil {
 			fmt.Printf("error wile user creation: %v", err)
 		}
-
-		if i > 1 {
-			break
-		}
 	}
-
 	return nil
 }
 
