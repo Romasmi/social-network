@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Romasmi/social-network/internal/models"
@@ -39,6 +40,8 @@ func (a *App) importUserByLink(link string) error {
 	}
 
 	reader := csv.NewReader(resp.Body)
+	var wg sync.WaitGroup
+	errCh := make(chan error, 10)
 	for {
 		record, err := reader.Read()
 		if err == io.EOF {
@@ -52,11 +55,30 @@ func (a *App) importUserByLink(link string) error {
 		if err != nil {
 			fmt.Printf("error while parsing a line: %v", err)
 		}
-		err = a.importUser(parsed)
-		if err != nil {
-			fmt.Printf("error wile user creation: %v", err)
-		}
+
+		// TODO replace with pool worker pool
+		wg.Add(1)
+		go func(user *ParsedUser) {
+			defer wg.Done()
+			if err := a.importUser(parsed); err != nil {
+				errCh <- fmt.Errorf("error while user creation: %v", err)
+			}
+		}(parsed)
 	}
+
+	go func() {
+		wg.Wait()
+		close(errCh)
+	}()
+
+	var errors []string
+	for err := range errCh {
+		errors = append(errors, err.Error())
+	}
+	if len(errors) > 0 {
+		return fmt.Errorf("import completed with errors: %s", strings.Join(errors, "; "))
+	}
+
 	return nil
 }
 

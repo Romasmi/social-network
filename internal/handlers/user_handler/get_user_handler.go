@@ -11,6 +11,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type userSearchParameters struct {
+	firstName  string
+	secondName string
+}
+
 func (h *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userId, err := uuid.Parse(vars["userId"])
@@ -32,4 +37,13 @@ func (h *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.SuccessJsonResponse(w, profile)
+}
+
+func (h *UserHandler) SearchUserHandler(w http.ResponseWriter, r *http.Request) {
+	queryParams := r.URL.Query()
+	userSearchData := &userSearchParameters{
+		firstName:  queryParams.Get("first_name"),
+		secondName: queryParams.Get("second_name"),
+	}
+	fmt.Println("search data", userSearchData)
 }

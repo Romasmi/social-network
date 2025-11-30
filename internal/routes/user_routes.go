@@ -32,4 +32,5 @@ func RegisterUserRoutes(r *mux.Router, db *pgxpool.Pool, cng *config.Config) {
 
 	privateRoute.Use(authMiddleware.Process)
 	privateRoute.HandleFunc("/user/get/{userId}", userHandler.GetUserHandler).Methods(http.MethodGet)
+	privateRoute.HandleFunc("/user/search", userHandler.GetUserHandler).Methods(http.MethodGet)
 }
