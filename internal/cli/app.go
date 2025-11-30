@@ -1,0 +1,55 @@
+package cli
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/Romasmi/social-network/internal/config"
+	"github.com/Romasmi/social-network/internal/database"
+)
+
+type App struct {
+	DbConn *database.DbConnection
+	Config *config.Config
+}
+
+func CreateApp(configPath string) (*App, error) {
+	app := &App{}
+	err := app.init(configPath)
+	if err != nil {
+		return nil, err
+	}
+	return app, nil
+}
+
+func (a *App) init(configPath string) error {
+	envConfig, err := config.LoadConfig(configPath)
+	if err != nil {
+		return fmt.Errorf("error loading Config: %v\n", err)
+	}
+	a.Config = envConfig
+
+	dbConn := &database.DbConnection{Config: &envConfig.Database}
+	if err = dbConn.Connect(); err != nil {
+		return fmt.Errorf("error connecting to DB: %v\n", err)
+	}
+
+	return nil
+}
+
+func (a *App) Shutdown(ctx context.Context) error {
+	var shutdownErr error
+
+	if a.DbConn != nil && a.DbConn.DB != nil {
+		fmt.Println("Closing database connections...")
+		select {
+		case <-ctx.Done():
+			fmt.Println("Shutdown timeout reached, forcing database close")
+		default:
+			a.DbConn.DB.Close()
+		}
+	}
+
+	fmt.Println("Cleanup completed")
+	return shutdownErr
+}
