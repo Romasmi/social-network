@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -29,8 +30,10 @@ func (a *App) iniCommands() {
 			if err != nil {
 				return err
 			}
-
-			return a.importUserByLink(context.Background(), args[1])
+			start := time.Now()
+			err = a.importUserByLink(context.Background(), args[1])
+			fmt.Printf("Import took %v\n", time.Since(start))
+			return err
 		},
 	})
 }
