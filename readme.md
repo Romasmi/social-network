@@ -51,5 +51,5 @@ Name | birdate | Profile
 ### Load testing via K6
 
 ```shell
- k6 run load_testing/user_search.js
+ k6 run --vus 1000 --duration 30s -e TOKEN=<token> load_testing/user_search.js
 ```
