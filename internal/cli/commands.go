@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"fmt"
 	"net/url"
 	"os"
@@ -29,7 +30,7 @@ func (a *App) iniCommands() {
 				return err
 			}
 
-			return a.importUserByLink(args[1])
+			return a.importUserByLink(context.Background(), args[1])
 		},
 	})
 }

@@ -23,7 +23,7 @@ type ParsedUser struct {
 	City       string    `json:"city"`
 }
 
-func (a *App) importUserByLink(link string) error {
+func (a *App) importUserByLink(context context.Context, link string) error {
 	resp, err := http.Get(link)
 	if err != nil {
 		return err
@@ -41,30 +41,47 @@ func (a *App) importUserByLink(link string) error {
 
 	reader := csv.NewReader(resp.Body)
 	var wg sync.WaitGroup
+	const maxWorkers = 100
+	jobs := make(chan *ParsedUser, 100)
 	errCh := make(chan error, 10)
-	for {
-		record, err := reader.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-		}
 
-		parsed, err := recordIntoModel(record)
-		if err != nil {
-			fmt.Printf("error while parsing a line: %v", err)
-		}
-
-		// TODO replace with pool worker pool
+	for i := 0; i < maxWorkers; i++ {
 		wg.Add(1)
-		go func(user *ParsedUser) {
+		go func(workerId int) {
+			defer func() {
+				if r := recover(); r != nil {
+					errCh <- fmt.Errorf("recovered in goroutine: %w", r)
+				}
+			}()
 			defer wg.Done()
-			if err := a.importUser(parsed); err != nil {
-				errCh <- fmt.Errorf("error while user creation: %v", err)
+			for user := range jobs {
+				if err := a.importUser(context, user); err != nil {
+					errCh <- fmt.Errorf("error while user creation: %v", err)
+				}
 			}
-		}(parsed)
+		}(i)
 	}
+
+	go func() {
+		for {
+			record, err := reader.Read()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				errCh <- err
+				break
+			}
+
+			parsed, err := recordIntoModel(record)
+			if err != nil {
+				errCh <- fmt.Errorf("error while parsing a line: %v", err)
+			}
+
+			jobs <- parsed
+		}
+		close(jobs)
+	}()
 
 	go func() {
 		wg.Wait()
@@ -106,7 +123,7 @@ func recordIntoModel(record []string) (*ParsedUser, error) {
 	return &user, err
 }
 
-func (a *App) importUser(user *ParsedUser) error {
+func (a *App) importUser(context context.Context, user *ParsedUser) error {
 	cityRepo := repository.CreateCityRepository(a.DbConn.DB)
 	profileRepo := repository.CreateProfileRepository(a.DbConn.DB)
 	uow := repository.CreateUnitOfWork(a.DbConn.DB)
@@ -118,6 +135,6 @@ func (a *App) importUser(user *ParsedUser) error {
 		Birthdate:  user.Birthdate,
 		City:       user.City,
 	}
-	_, err := userService.RegisterUser(context.Background(), payload)
+	_, err := userService.RegisterUser(context, payload)
 	return err
 }
