@@ -6,11 +6,13 @@ import (
 
 	"github.com/Romasmi/social-network/internal/config"
 	"github.com/Romasmi/social-network/internal/database"
+	"github.com/spf13/cobra"
 )
 
 type App struct {
 	DbConn *database.DbConnection
 	Config *config.Config
+	Cmd    *cobra.Command
 }
 
 func CreateApp(configPath string) (*App, error) {
@@ -33,6 +35,15 @@ func (a *App) init(configPath string) error {
 	if err = dbConn.Connect(); err != nil {
 		return fmt.Errorf("error connecting to DB: %v\n", err)
 	}
+
+	a.Cmd = &cobra.Command{
+		Use:   "social-network",
+		Short: "CLI for managing social network",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println("Welcome to CLI of Social network")
+		},
+	}
+	a.iniCommands()
 
 	return nil
 }

@@ -23,6 +23,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	appInstance.Execute()
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
