@@ -198,3 +198,12 @@ WHERE first_name LIKE 'Абра%' AND second_name LIKE 'Тим%';
 For request like "<query>%" B-TREE index works properly and 
 other types of indexes (like GIN) are redundant. 
 Fulltext index is not good in this case, because it is not supposed to work with substrings. 
+
+### Performance Improvement Summary
+
+| Concurrent Users | Latency Improvement | Throughput Improvement |
+|------------------|---------------------|------------------------|
+| 1                | 12x faster          | 10% better             |
+| 10               | 25x faster          | 12% better             |
+| 100              | 139x faster         | 163% better            |
+| 1000             | 303x faster         | 1520% better           |
