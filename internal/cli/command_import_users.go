@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"context"
 	"encoding/csv"
 	"fmt"
 	"io"
@@ -8,6 +9,10 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/Romasmi/social-network/internal/models"
+	"github.com/Romasmi/social-network/internal/repository"
+	"github.com/Romasmi/social-network/internal/services"
 )
 
 type ParsedUser struct {
@@ -46,15 +51,18 @@ func (a *App) importUserByLink(link string) error {
 		}
 		fmt.Println()
 
-		if i > 20 {
-			break
-		}
-
 		parsed, err := recordIntoModel(record)
 		if err != nil {
 			fmt.Printf("error while parsing a line: %v", err)
 		}
-		fmt.Println("parsed", parsed)
+		err = a.importUser(parsed)
+		if err != nil {
+			fmt.Printf("error wile user creation: %v", err)
+		}
+
+		if i > 1 {
+			break
+		}
 	}
 
 	return nil
@@ -82,4 +90,19 @@ func recordIntoModel(record []string) (*ParsedUser, error) {
 	user.City = record[2]
 
 	return &user, err
+}
+
+func (a *App) importUser(user *ParsedUser) error {
+	cityRepo := repository.CreateCityRepository(a.DbConn.DB)
+	profileRepo := repository.CreateProfileRepository(a.DbConn.DB)
+	userService := services.CreateUserService(cityRepo, profileRepo, nil)
+
+	payload := &models.CreateProfileModel{
+		FirstName:  user.FirstName,
+		SecondName: user.SecondName,
+		Birthdate:  user.Birthdate,
+		City:       user.City,
+	}
+	_, err := userService.RegisterUser(context.Background(), payload)
+	return err
 }

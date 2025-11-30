@@ -36,6 +36,7 @@ func (a *App) init(configPath string) error {
 		return fmt.Errorf("error connecting to DB: %v\n", err)
 	}
 
+	a.DbConn = dbConn
 	a.Cmd = &cobra.Command{
 		Use:   "social-network",
 		Short: "CLI for managing social network",
