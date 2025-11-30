@@ -47,3 +47,9 @@ go run cmd/cli/main.go import -l <link to file>
 
 File structure:
 Name | birdate | Profile
+
+### Load testing via K6
+
+```shell
+ k6 run load_testing/user_search.js
+```
