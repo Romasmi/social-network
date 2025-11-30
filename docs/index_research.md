@@ -24,20 +24,18 @@
 - Explanation of why this particular index was chosen.
 
 ## Solution
-### How to right tests
+### Import test data
+```shell
+go run cmd/cli/main.go import -l <link to file>
+
+```
+
+### How to run tests
 In a root folder run:
 ```shell
- k6 run --vus 1 --duration 30s -e TOKEN=019ad610-78ed-7e30-83da-d876f019faef load_testing/user_search.js
+ k6 run --vus 1 --duration 30s -e TOKEN=<token> load_testing/user_search.js
 ```
-```shell
- k6 run --vus 10 --duration 30s -e TOKEN=019ad610-78ed-7e30-83da-d876f019faef load_testing/user_search.js
-```
-```shell
- k6 run --vus 100 --duration 30s -e TOKEN=019ad610-78ed-7e30-83da-d876f019faef load_testing/user_search.js
-```
-```shell
- k6 run --vus 1000 --duration 30s -e TOKEN=019ad610-78ed-7e30-83da-d876f019faef load_testing/user_search.js
-```
+
 p(95) displayed on XY graphs below
 
 ### B-tree for queries LIKE "<query>%"
