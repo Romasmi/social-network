@@ -14,11 +14,11 @@ type Provider interface {
 
 type UnitOfWork interface {
 	Provider
-	WithTransaction(ctx context.Context, fn func(ctx context.Context) error) error
+	WithTransaction(ctx context.Context, fn func(ctx context.Context, uof UnitOfWork) error) error
 }
 
 type UnitOfWorkImpl struct {
-	db *pgxpool.Pool
+	db DBQuerier
 }
 
 func CreateUnitOfWork(db *pgxpool.Pool) UnitOfWork {
@@ -33,22 +33,30 @@ func (u *UnitOfWorkImpl) Profile() *ProfileRepository {
 	return CreateProfileRepository(u.db)
 }
 
-func (u *UnitOfWorkImpl) WithTransaction(ctx context.Context, fn func(ctx context.Context) error) error {
-	transaction, err := u.db.Begin(ctx)
+func (u *UnitOfWorkImpl) WithTransaction(ctx context.Context, fn func(ctx context.Context, txUoW UnitOfWork) error) error {
+	pool, ok := u.db.(*pgxpool.Pool)
+	if !ok {
+		return fn(ctx, u)
+	}
+
+	transaction, err := pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
+
 	defer func() {
 		if p := recover(); p != nil {
 			err := transaction.Rollback(ctx)
 			if err != nil {
+				// TODO replace with logger
 				fmt.Printf("error while transaction rollback: %v", err)
 			}
 			panic(p)
 		}
 	}()
 
-	if err := fn(ctx); err != nil {
+	txUoW := &UnitOfWorkImpl{db: transaction}
+	if err := fn(ctx, txUoW); err != nil {
 		localErr := transaction.Rollback(ctx)
 		if localErr != nil {
 			fmt.Printf("error while transaction rollback: %v", localErr)
