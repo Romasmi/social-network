@@ -1,5 +1,7 @@
 # Social network mockup
 
+FYI: check researches in docs folder, it's interesting!
+
 ## Goal
 Create social network which allows to create and view user cards
 
@@ -43,7 +45,16 @@ migrate create -ext sql -dir migrations -seq create_roles_stable
 
 ### Import users
 Go to root folder and run:
+```shell
 go run cmd/cli/main.go import -l <link to file>
+
+```
 
 File structure:
 Name | birdate | Profile
+
+### Load testing via K6
+
+```shell
+ k6 run --vus 1000 --duration 30s -e TOKEN=<token> load_testing/user_search.js
+```
