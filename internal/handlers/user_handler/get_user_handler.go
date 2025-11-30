@@ -44,7 +44,7 @@ func (h *UserHandler) SearchUserHandler(w http.ResponseWriter, r *http.Request) 
 	queryParams := r.URL.Query()
 	userSearchData := &models.UserSearchParams{
 		FirstName:  queryParams.Get("first_name"),
-		SecondName: queryParams.Get("second_name"),
+		SecondName: queryParams.Get("last_name"),
 	}
 
 	profiles, err := h.userService.SearchUsers(r.Context(), userSearchData)
