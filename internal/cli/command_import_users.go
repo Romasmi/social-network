@@ -95,7 +95,8 @@ func recordIntoModel(record []string) (*ParsedUser, error) {
 func (a *App) importUser(user *ParsedUser) error {
 	cityRepo := repository.CreateCityRepository(a.DbConn.DB)
 	profileRepo := repository.CreateProfileRepository(a.DbConn.DB)
-	userService := services.CreateUserService(cityRepo, profileRepo, nil)
+	uow := repository.CreateUnitOfWork(a.DbConn.DB)
+	userService := services.CreateUserService(cityRepo, profileRepo, uow)
 
 	payload := &models.CreateProfileModel{
 		FirstName:  user.FirstName,

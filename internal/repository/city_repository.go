@@ -46,3 +46,24 @@ func (r *CityRepository) GetCityByName(ctx context.Context, name string) (*model
 	}
 	return city, nil
 }
+
+func (r *CityRepository) CreateCity(ctx context.Context, city *models.City) (*models.City, error) {
+	const query = `
+		INSERT INTO %s (id, name, country_code, state_province)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, name, country_code, state_province, created_at
+	`
+	sql := fmt.Sprintf(query, citiesTable)
+	created := &models.City{}
+	err := r.db.QueryRow(ctx, sql, city.ID, city.Name, city.CountryCode, city.StateProvince).Scan(
+		&created.ID,
+		&created.Name,
+		&created.CountryCode,
+		&created.StateProvince,
+		&created.CreatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create city: %w", err)
+	}
+	return created, nil
+}

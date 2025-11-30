@@ -42,8 +42,24 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreatePr
 
 	city, err := s.cityRepo.GetCityByName(ctx, payload.City)
 	if err != nil {
-		return nil, err
+		if err != repository.ErrNotFound {
+			return nil, err
+		}
+		cityId, err := uuid.NewV7()
+		if err != nil {
+			return nil, err
+		}
+
+		city, err = s.cityRepo.CreateCity(ctx, &models.City{
+			ID:   cityId,
+			Name: payload.City,
+		})
+		if err != nil {
+			return nil, err
+		}
+
 	}
+
 	var newUser models.User
 	newUser.ID = userId
 	newUser.Email = gofakeit.Email() // Generate email just as example
