@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Romasmi/social-network/internal/models"
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/Romasmi/social-network/internal/utils"
 	"github.com/google/uuid"
@@ -41,9 +42,17 @@ func (h *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *UserHandler) SearchUserHandler(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
-	userSearchData := &userSearchParameters{
-		firstName:  queryParams.Get("first_name"),
-		secondName: queryParams.Get("second_name"),
+	userSearchData := &models.UserSearchParams{
+		FirstName:  queryParams.Get("first_name"),
+		SecondName: queryParams.Get("second_name"),
 	}
-	fmt.Println("search data", userSearchData)
+
+	profiles, err := h.userService.SearchUsers(r.Context(), userSearchData)
+	if err != nil {
+		fmt.Printf("error while searching users: %v\n", err)
+		utils.JsonInternalServerError(w)
+		return
+	}
+
+	utils.SuccessJsonResponse(w, profiles)
 }

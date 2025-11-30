@@ -99,3 +99,7 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreatePr
 func (s *UserService) GetUserByProfileId(ctx context.Context, profileId uuid.UUID) (*models.Profile, error) {
 	return s.profileRepo.GetProfileByProfileId(ctx, profileId)
 }
+
+func (s *UserService) SearchUsers(ctx context.Context, queryParams *models.UserSearchParams) ([]*models.Profile, error) {
+	return s.profileRepo.SearchProfile(ctx, queryParams)
+}
