@@ -15,7 +15,7 @@ make local && go run cmd/api/main.go
 
 ### If you don't have go 1.25.1^ locally
 ```shell
-make local-full
+make local-fullы
 ```
 
 ## Requirements
@@ -40,3 +40,10 @@ Specification : https://github.com/OtusTeam/highload/blob/master/homework/openap
 ``` bash
 migrate create -ext sql -dir migrations -seq create_roles_stable
 ```
+
+### Import users
+Go to root folder and run:
+go run cmd/cli/main.go import -l <link to file>
+
+File structure:
+Name | birdate | Profile

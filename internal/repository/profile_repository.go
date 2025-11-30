@@ -4,22 +4,23 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/Romasmi/social-network/internal/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type ProfileRepository struct {
-	db *pgxpool.Pool
+	db DBQuerier
 }
 
 const profilesTable = "profiles"
 
-func CreateProfileRepository(db *pgxpool.Pool) *ProfileRepository {
+func CreateProfileRepository(db DBQuerier) *ProfileRepository {
 	return &ProfileRepository{db: db}
 }
 
@@ -92,4 +93,63 @@ func (r *ProfileRepository) GetProfileByProfileId(ctx context.Context, profileId
 		return nil, fmt.Errorf("failed to get profile by user id: %w", err)
 	}
 	return profile, nil
+}
+
+func (r *ProfileRepository) SearchProfile(ctx context.Context, queryParams *models.UserSearchParams) ([]*models.Profile, error) {
+	query := `
+		SELECT id, user_id, first_name, second_name, birthdate, gender, biography, city_id 
+		FROM ` + profilesTable
+
+	var conditions []string
+	var args []interface{}
+
+	if queryParams.FirstName != "" {
+		conditions = append(conditions, "first_name LIKE $"+strconv.Itoa(len(args)+1))
+		args = append(args, queryParams.FirstName+"%")
+	}
+
+	if queryParams.SecondName != "" {
+		conditions = append(conditions, "second_name LIKE $"+strconv.Itoa(len(args)+1))
+		args = append(args, queryParams.SecondName+"%")
+	}
+
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	query += ` 
+		ORDER BY id
+		LIMIT 100;
+	`
+
+	rows, err := r.db.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search profiles: %w", err)
+	}
+	defer rows.Close()
+
+	profiles := make([]*models.Profile, 0)
+	for rows.Next() {
+		profile := &models.Profile{}
+		err := rows.Scan(
+			&profile.ID,
+			&profile.UserId,
+			&profile.FirstName,
+			&profile.SecondName,
+			&profile.Birthdate,
+			&profile.Gender,
+			&profile.Biography,
+			&profile.CityId,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan profile row: %w", err)
+		}
+		profiles = append(profiles, profile)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating profile rows: %w", err)
+	}
+
+	return profiles, nil
 }

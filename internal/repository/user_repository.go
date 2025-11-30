@@ -10,16 +10,15 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type UserRepository struct {
-	db *pgxpool.Pool
+	db DBQuerier
 }
 
 const usersTable = "users"
 
-func CreateUserRepository(db *pgxpool.Pool) *UserRepository {
+func CreateUserRepository(db DBQuerier) *UserRepository {
 	return &UserRepository{db: db}
 }
 

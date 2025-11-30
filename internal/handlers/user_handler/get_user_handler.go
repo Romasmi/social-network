@@ -5,11 +5,17 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Romasmi/social-network/internal/models"
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/Romasmi/social-network/internal/utils"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
+
+type userSearchParameters struct {
+	firstName  string
+	secondName string
+}
 
 func (h *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -32,4 +38,21 @@ func (h *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.SuccessJsonResponse(w, profile)
+}
+
+func (h *UserHandler) SearchUserHandler(w http.ResponseWriter, r *http.Request) {
+	queryParams := r.URL.Query()
+	userSearchData := &models.UserSearchParams{
+		FirstName:  queryParams.Get("first_name"),
+		SecondName: queryParams.Get("second_name"),
+	}
+
+	profiles, err := h.userService.SearchUsers(r.Context(), userSearchData)
+	if err != nil {
+		fmt.Printf("error while searching users: %v\n", err)
+		utils.JsonInternalServerError(w)
+		return
+	}
+
+	utils.SuccessJsonResponse(w, profiles)
 }

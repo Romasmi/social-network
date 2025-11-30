@@ -34,3 +34,8 @@ type CreateProfileModel struct {
 	City       string    `json:"city"`
 	Password   string    `json:"password"`
 }
+
+type UserSearchParams struct {
+	FirstName  string
+	SecondName string
+}

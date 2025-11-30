@@ -42,8 +42,24 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreatePr
 
 	city, err := s.cityRepo.GetCityByName(ctx, payload.City)
 	if err != nil {
-		return nil, err
+		if err != repository.ErrNotFound {
+			return nil, err
+		}
+		cityId, err := uuid.NewV7()
+		if err != nil {
+			return nil, err
+		}
+
+		city, err = s.cityRepo.CreateCity(ctx, &models.City{
+			ID:   cityId,
+			Name: payload.City,
+		})
+		if err != nil {
+			return nil, err
+		}
+
 	}
+
 	var newUser models.User
 	newUser.ID = userId
 	newUser.Email = gofakeit.Email() // Generate email just as example
@@ -61,10 +77,10 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreatePr
 	newProfile.CityId = city.ID
 	newProfile.City = city.Name
 
-	userRepo := s.uow.User()
-	profileRepo := s.uow.Profile()
+	err = s.uow.WithTransaction(ctx, func(ctx context.Context, txUoW repository.UnitOfWork) error {
+		userRepo := txUoW.User()
+		profileRepo := txUoW.Profile()
 
-	err = s.uow.WithTransaction(ctx, func(ctx context.Context) error {
 		_, err = userRepo.CreateUser(ctx, &newUser)
 		if err != nil {
 			return fmt.Errorf("can't create user: %v", err)
@@ -82,4 +98,8 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreatePr
 
 func (s *UserService) GetUserByProfileId(ctx context.Context, profileId uuid.UUID) (*models.Profile, error) {
 	return s.profileRepo.GetProfileByProfileId(ctx, profileId)
+}
+
+func (s *UserService) SearchUsers(ctx context.Context, queryParams *models.UserSearchParams) ([]*models.Profile, error) {
+	return s.profileRepo.SearchProfile(ctx, queryParams)
 }
