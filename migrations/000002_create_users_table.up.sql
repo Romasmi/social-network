@@ -7,9 +7,3 @@ CREATE TABLE IF NOT EXISTS users
     updated_at TIMESTAMP DEFAULT NOW(),
     created_at TIMESTAMP DEFAULT NOW()
 );
-
-
--- Note: indexes are not created intentionally to get performance issue
--- CREATE INDEX IDX_users_city ON users(city);
--- CREATE INDEX IDX_users_birthdate ON users(birthdate);
--- CREATE INDEX IDX_users_name ON users(name);

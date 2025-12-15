@@ -15,8 +15,7 @@ CREATE TABLE profiles
     created_at TIMESTAMP DEFAULT NOW()
 );
 
-
--- Note: indexes are not created intentionally to get performance issue
--- CREATE INDEX IDX_users_city ON users(city);
--- CREATE INDEX IDX_users_birthdate ON users(birthdate);
--- CREATE INDEX IDX_users_name ON users(name);
+CREATE INDEX IDX_users_city ON profiles(city_id);
+CREATE INDEX IDX_users_birthdate ON profiles(birthdate);
+CREATE INDEX IDX_profile_name_composite ON profiles (first_name varchar_pattern_ops, second_name varchar_pattern_ops);
+CREATE INDEX IDX_profile_last_name ON profiles (second_name varchar_pattern_ops);

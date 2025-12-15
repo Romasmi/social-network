@@ -7,9 +7,8 @@ CREATE TABLE IF NOT EXISTS cities (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS IDX_cities_name_state_province_country_code ON cities(name, state_province, country_code);
 
--- Note: indexes are not created intentionally to get performance issues
--- CREATE INDEX idx_cities_country ON cities(country_code);
--- CREATE INDEX idx_cities_name ON cities(name);
+CREATE INDEX idx_cities_country ON cities(country_code);
+CREATE INDEX idx_cities_name ON cities(name);
 
 -- For testing reason insert dummy data with Russian cities
 INSERT INTO cities (id, name, country_code, state_province)
