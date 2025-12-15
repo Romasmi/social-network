@@ -83,12 +83,12 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreatePr
 
 		_, err = userRepo.CreateUser(ctx, &newUser)
 		if err != nil {
-			return fmt.Errorf("can't create user: %v", err)
+			return fmt.Errorf("can't create user: %w", err)
 		}
 
 		profile, err := profileRepo.CreateProfile(ctx, &newProfile)
 		if err != nil {
-			return fmt.Errorf("can't create profile: %v", err)
+			return fmt.Errorf("can't create profile: %w", err)
 		}
 		profile.City = city.Name
 		return nil
