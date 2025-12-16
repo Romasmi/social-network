@@ -127,7 +127,7 @@ func (a *App) importUser(context context.Context, user *ParsedUser) error {
 	cityRepo := repository.CreateCityRepository(a.DbConn.DB)
 	profileRepo := repository.CreateProfileRepository(a.DbConn.DB)
 	uow := repository.CreateUnitOfWork(a.DbConn.DB)
-	userService := services.CreateUserService(cityRepo, profileRepo, uow)
+	userService := services.CreateUserService(cityRepo, profileRepo, nil, uow)
 
 	payload := &models.CreateProfileModel{
 		FirstName:  user.FirstName,

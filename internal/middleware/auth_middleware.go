@@ -1,10 +1,12 @@
 package middleware
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
 
+	"github.com/Romasmi/social-network/internal/models"
 	"github.com/Romasmi/social-network/internal/services"
 	"github.com/Romasmi/social-network/internal/utils"
 	"github.com/google/uuid"
@@ -36,13 +38,16 @@ func (m *AuthMiddleware) Process(next http.Handler) http.Handler {
 			return
 		}
 
-		if isValidSession, err := m.SessionService.IsValidSession(r.Context(), sessionId); isValidSession == false || err != nil {
+		session := &models.Session{}
+		isValidSession := false
+		if isValidSession, session, err = m.SessionService.IsValidSession(r.Context(), sessionId); isValidSession == false || err != nil {
 			if err != nil {
 				fmt.Printf("error while check session: %v\n", err)
 			}
 			utils.JsonError(w, http.StatusForbidden, nil)
 			return
 		}
-		next.ServeHTTP(w, r)
+		ctx := context.WithValue(r.Context(), "profileId", session.ProfileId.String())
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

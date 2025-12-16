@@ -19,14 +19,14 @@ func CreateProfileFriendsRepository(db DBQuerier) *ProfileFriendsRepository {
 	}
 }
 
-func (r *ProfileFriendsRepository) AddFriend(ctx context.Context, profile1Id, profile2Id uuid.UUID) error {
+func (r *ProfileFriendsRepository) SetFriend(ctx context.Context, profile1Id, profile2Id uuid.UUID) error {
 	const query = `
 		INSERT INTO %s (profile1_id, profile2_id)
 		VALUES ($1, $2)
 	`
 	sql := fmt.Sprintf(query, profileFriendsTable)
 
-	_, err := r.db.Query(
+	_, err := r.db.Exec(
 		ctx,
 		sql,
 		profile1Id,
