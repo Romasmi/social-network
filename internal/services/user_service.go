@@ -12,16 +12,18 @@ import (
 )
 
 type UserService struct {
-	cityRepo    *repository.CityRepository
-	profileRepo *repository.ProfileRepository
-	uow         repository.UnitOfWork
+	cityRepo           *repository.CityRepository
+	profileRepo        *repository.ProfileRepository
+	profileFriendsRepo *repository.ProfileFriendsRepository
+	uow                repository.UnitOfWork
 }
 
 func CreateUserService(
 	cityRepo *repository.CityRepository,
 	profileRepo *repository.ProfileRepository,
+	profileFriendRepo *repository.ProfileFriendsRepository,
 	uow repository.UnitOfWork) *UserService {
-	return &UserService{cityRepo: cityRepo, profileRepo: profileRepo, uow: uow}
+	return &UserService{cityRepo: cityRepo, profileRepo: profileRepo, profileFriendsRepo: profileFriendRepo, uow: uow}
 }
 
 func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreateProfileModel) (*models.Profile, error) {
@@ -102,4 +104,8 @@ func (s *UserService) GetUserByProfileId(ctx context.Context, profileId uuid.UUI
 
 func (s *UserService) SearchUsers(ctx context.Context, queryParams *models.UserSearchParams) ([]*models.Profile, error) {
 	return s.profileRepo.SearchProfile(ctx, queryParams)
+}
+
+func (s *UserService) SetFriend(ctx context.Context, profileId1, profileId2 uuid.UUID) error {
+	return s.profileFriendsRepo.SetFriend(ctx, profileId1, profileId2)
 }

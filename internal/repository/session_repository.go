@@ -45,9 +45,10 @@ func (r *SessionRepository) CreateSession(ctx context.Context, s *models.Session
 
 func (r *SessionRepository) GetSessionById(ctx context.Context, id uuid.UUID) (*models.Session, error) {
 	const query = `
-		SELECT id, user_id, metadata, expires_at, created_at
-		FROM %s
-		WHERE id = $1
+		SELECT s.id, s.user_id, s.metadata, s.expires_at, s.created_at, p.id as profile_id
+		FROM %s AS s
+			LEFT JOIN profiles AS p ON p.user_id = s.user_id 
+		WHERE s.id = $1
 		LIMIT 1
 	`
 	sql := fmt.Sprintf(query, sessionsTable)
@@ -59,6 +60,7 @@ func (r *SessionRepository) GetSessionById(ctx context.Context, id uuid.UUID) (*
 		&s.Metadata,
 		&s.ExpiresAt,
 		&s.CreatedAt,
+		&s.ProfileId,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
