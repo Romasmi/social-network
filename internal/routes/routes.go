@@ -28,6 +28,7 @@ func RegisterRoutes(
 
 	RegisterAuthHandlers(router, db, config)
 	RegisterUserRoutes(router, db, config)
+	RegisterPostRoutes(router, db, config)
 }
 
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
