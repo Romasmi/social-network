@@ -12,7 +12,7 @@ import (
 )
 
 type UpdatePostRequest struct {
-	PostID string `json:"postId"`
+	PostID string `json:"id"`
 	Text   string `json:"text"`
 }
 
