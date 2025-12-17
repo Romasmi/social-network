@@ -89,3 +89,27 @@ func (r *PostsRepository) DeletePost(ctx context.Context, postID uuid.UUID, prof
 	}
 	return nil
 }
+
+func (r *PostsRepository) GetPost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID) (*models.Post, error) {
+	const query = `
+        SELECT id, profile_id, text
+        FROM %s
+        WHERE id = $1 AND profile_id = $2
+        LIMIT 1
+    `
+	sql := fmt.Sprintf(query, postsTable)
+
+	post := &models.Post{}
+	err := r.db.QueryRow(ctx, sql, postID, profileID).Scan(
+		&post.ID,
+		&post.ProfileId,
+		&post.Text,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	return post, nil
+}
