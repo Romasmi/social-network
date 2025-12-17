@@ -1,1 +1,1 @@
-DROP TABLE user_friends;
+DROP TABLE profile_friends;
