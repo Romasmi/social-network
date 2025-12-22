@@ -35,3 +35,20 @@ func (r *ProfileFriendsRepository) SetFriend(ctx context.Context, profile1Id, pr
 	)
 	return err
 }
+
+func (r *ProfileFriendsRepository) DeleteFriend(ctx context.Context, profile1Id, profile2Id uuid.UUID) error {
+	const query = `
+		DELETE 
+		FROM %s
+		WHERE profile1_id = $1 AND profile2_id = $2 OR profile2_id = $1 AND profile1_id = $2
+	`
+	sql := fmt.Sprintf(query, profileFriendsTable)
+
+	_, err := r.db.Exec(
+		ctx,
+		sql,
+		profile1Id,
+		profile2Id,
+	)
+	return err
+}

@@ -110,3 +110,7 @@ func (s *UserService) SearchUsers(ctx context.Context, queryParams *models.UserS
 func (s *UserService) SetFriend(ctx context.Context, profileId1, profileId2 uuid.UUID) error {
 	return s.profileFriendsRepo.SetFriend(ctx, profileId1, profileId2)
 }
+
+func (s *UserService) DeleteFriend(ctx context.Context, profileId1, profileId2 uuid.UUID) error {
+	return s.profileFriendsRepo.DeleteFriend(ctx, profileId1, profileId2)
+}
