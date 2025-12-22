@@ -29,4 +29,5 @@ func RegisterPostRoutes(r *mux.Router, db *pgxpool.Pool, cng *config.Config) {
 	privateRoute.HandleFunc("/post/update", postHandler.Update).Methods(http.MethodPut)
 	privateRoute.HandleFunc("/post/delete/{postId}", postHandler.Delete).Methods(http.MethodDelete)
 	privateRoute.HandleFunc("/post/get/{postId}", postHandler.Get).Methods(http.MethodGet)
+	privateRoute.HandleFunc("/post/feed", postHandler.GetFeed).Methods(http.MethodGet)
 }

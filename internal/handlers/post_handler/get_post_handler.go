@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/Romasmi/social-network/internal/utils"
@@ -34,4 +35,17 @@ func (h *PostHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.SuccessJsonResponse(w, post)
+}
+
+func (h *PostHandler) GetFeed(w http.ResponseWriter, r *http.Request) {
+	profileId, _ := uuid.Parse(r.Context().Value("profileId").(string))
+	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	posts, err := h.postService.GetFeed(r.Context(), profileId, limit, offset)
+	if err != nil {
+		fmt.Printf("error while getting posts: %v\n", err)
+		utils.JsonInternalServerError(w)
+		return
+	}
+	utils.SuccessJsonResponse(w, posts)
 }

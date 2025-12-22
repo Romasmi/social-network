@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/Romasmi/social-network/internal/models"
@@ -44,7 +45,7 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreatePr
 
 	city, err := s.cityRepo.GetCityByName(ctx, payload.City)
 	if err != nil {
-		if err != repository.ErrNotFound {
+		if !errors.Is(err, repository.ErrNotFound) {
 			return nil, err
 		}
 		cityId, err := uuid.NewV7()
@@ -108,4 +109,8 @@ func (s *UserService) SearchUsers(ctx context.Context, queryParams *models.UserS
 
 func (s *UserService) SetFriend(ctx context.Context, profileId1, profileId2 uuid.UUID) error {
 	return s.profileFriendsRepo.SetFriend(ctx, profileId1, profileId2)
+}
+
+func (s *UserService) DeleteFriend(ctx context.Context, profileId1, profileId2 uuid.UUID) error {
+	return s.profileFriendsRepo.DeleteFriend(ctx, profileId1, profileId2)
 }

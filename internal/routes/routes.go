@@ -32,5 +32,6 @@ func RegisterRoutes(
 }
 
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	utils.JsonError(w, http.StatusNotFound, fmt.Errorf("undefined route"))
 }

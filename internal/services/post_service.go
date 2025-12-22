@@ -40,3 +40,7 @@ func (s *PostService) DeletePost(ctx context.Context, profileID uuid.UUID, postI
 func (s *PostService) GetPost(ctx context.Context, profileID uuid.UUID, postID uuid.UUID) (*models.Post, error) {
 	return s.postsRepo.GetPost(ctx, postID, profileID)
 }
+
+func (s *PostService) GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*models.Post, error) {
+	return s.postsRepo.GetFeed(ctx, profileID, limit, offset)
+}

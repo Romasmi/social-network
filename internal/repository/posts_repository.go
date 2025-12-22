@@ -113,3 +113,47 @@ func (r *PostsRepository) GetPost(ctx context.Context, postID uuid.UUID, profile
 	}
 	return post, nil
 }
+
+func (r *PostsRepository) GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*models.Post, error) {
+	const query = `
+		SELECT *
+		FROM %s
+		WHERE profile_id IN (
+			SELECT profile2_id
+			FROM %s
+			WHERE profile1_id = $1
+			UNION ALL
+			SELECT profile1_id
+			FROM %s
+			WHERE profile2_id = $1
+		) AND profile_id != $1
+		LIMIT $2
+		OFFSET $3
+    `
+	sql := fmt.Sprintf(query, postsTable, profileFriendsTable, profileFriendsTable)
+
+	rows, err := r.db.Query(ctx, sql, profileID, limit, offset)
+	if rows != nil {
+		defer rows.Close()
+	}
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []*models.Post{}, nil
+		}
+		return nil, err
+	}
+	posts := []*models.Post{}
+	for rows.Next() {
+		post := &models.Post{}
+		err := rows.Scan(
+			&post.ID,
+			&post.ProfileId,
+			&post.Text,
+		)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+	return posts, nil
+}

@@ -35,4 +35,5 @@ func RegisterUserRoutes(r *mux.Router, db *pgxpool.Pool, cng *config.Config) {
 	privateRoute.HandleFunc("/user/get/{userId}", userHandler.GetUserHandler).Methods(http.MethodGet)
 	privateRoute.HandleFunc("/user/search", userHandler.SearchUserHandler).Methods(http.MethodGet)
 	privateRoute.HandleFunc("/friend/set/{userId}", userHandler.SetFriend).Methods(http.MethodPut)
+	privateRoute.HandleFunc("/friend/delete/{userId}", userHandler.DeleteFriend).Methods(http.MethodPut)
 }
