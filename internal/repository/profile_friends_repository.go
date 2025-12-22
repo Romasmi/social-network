@@ -23,6 +23,7 @@ func (r *ProfileFriendsRepository) SetFriend(ctx context.Context, profile1Id, pr
 	const query = `
 		INSERT INTO %s (profile1_id, profile2_id)
 		VALUES ($1, $2)
+		ON CONFLICT (profile1_id, profile2_id) DO NOTHING
 	`
 	sql := fmt.Sprintf(query, profileFriendsTable)
 
