@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/Romasmi/social-network/internal/models"
@@ -44,7 +45,7 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreatePr
 
 	city, err := s.cityRepo.GetCityByName(ctx, payload.City)
 	if err != nil {
-		if err != repository.ErrNotFound {
+		if !errors.Is(err, repository.ErrNotFound) {
 			return nil, err
 		}
 		cityId, err := uuid.NewV7()
