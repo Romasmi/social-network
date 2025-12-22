@@ -50,6 +50,17 @@ go run cmd/cli/main.go import -l <link to file>
 
 ```
 
+### Import posts
+````shell
+go run ./cmd/cli importPosts <link> <profile ids to assign each post randomly>
+````
+
+Example:
+````shell
+go run ./cmd/cli importPosts https://raw.githubusercontent.com/OtusTeam/highload/refs/heads/master/homework/posts.txt 019ad582-424c-7316-b98c-eee5bf0f8d08 019ad582-42a7-7d0f-a287-67d3dc0040ae 019ad582-42b3-7340-a5b8-6025ce042c01 019ad582-426a-756e-ad6e-7341623185c4 019ad582-4292-78be-889c-027d95fcc30
+````
+
+
 File structure:
 Name | birdate | Profile
 
