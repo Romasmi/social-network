@@ -12,6 +12,7 @@ import (
 type Config struct {
 	Database Database
 	Server   Server
+	Redis    Redis
 }
 
 type Database struct {
@@ -20,6 +21,12 @@ type Database struct {
 	MinConnections        uint
 	MaxConnectionLifetime uint
 	MaxConnectionIdleTime uint
+}
+
+type Redis struct {
+	Host     string
+	Username string
+	Password string
 }
 
 type Server struct {

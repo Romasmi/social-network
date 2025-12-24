@@ -9,16 +9,18 @@ import (
 
 	"github.com/Romasmi/social-network/internal/config"
 	"github.com/Romasmi/social-network/internal/database"
+	"github.com/Romasmi/social-network/internal/infra/redis"
 	"github.com/Romasmi/social-network/internal/routes"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
 type App struct {
-	DbConn *database.DbConnection
-	Config *config.Config
-	router *mux.Router
-	server *http.Server
+	DbConn    *database.DbConnection
+	RedisConn *redis.Connection
+	Config    *config.Config
+	router    *mux.Router
+	server    *http.Server
 }
 
 func CreateApp(configPath string) (*App, error) {
@@ -41,10 +43,15 @@ func (a *App) init(configPath string) error {
 	if err = dbConn.Connect(); err != nil {
 		return fmt.Errorf("error connecting to DB: %v\n", err)
 	}
+	a.DbConn = dbConn
+
+	redisConn := &redis.Connection{Config: &envConfig.Redis}
+	redisConn.Connect()
+	a.RedisConn = redisConn
 
 	router := mux.NewRouter()
 
-	routes.RegisterRoutes(router, dbConn.DB, envConfig)
+	routes.RegisterRoutes(router, a.DbConn.DB, envConfig)
 
 	a.router = router
 	return nil
