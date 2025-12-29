@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Romasmi/social-network/internal/cli"
+	"github.com/Romasmi/social-network/internal/app"
 )
 
 func main() {
@@ -17,13 +17,13 @@ func main() {
 		basePath = "." // current directory
 	}
 
-	appInstance, err := cli.CreateApp(basePath)
+	appInstance, err := app.NewApp(basePath)
 	if err != nil {
 		fmt.Printf("error while app init: %v", err)
 		os.Exit(1)
 	}
-
-	appInstance.Execute()
+	cli := app.NewCli(appInstance)
+	cli.Run()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -34,7 +34,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := appInstance.Shutdown(ctx); err != nil {
+	if err := cli.Shutdown(ctx); err != nil {
 		fmt.Printf("Error during shutdown: %v\n", err)
 	}
 

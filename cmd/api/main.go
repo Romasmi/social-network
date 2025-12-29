@@ -22,11 +22,12 @@ func main() {
 		basePath = "." // current directory
 	}
 
-	appInstance, err := app.CreateApp(basePath)
+	appInstance, err := app.NewApp(basePath)
 	if err != nil {
 		fmt.Printf("error while app init: %v", err)
 		os.Exit(1)
 	}
+	api := app.NewApi(appInstance)
 
 	migrationsPath := filepath.Join(basePath, "migrations")
 	absPath, _ := filepath.Abs(migrationsPath)
@@ -52,7 +53,7 @@ func main() {
 	}
 
 	go func() {
-		if err := appInstance.Run(); err != nil {
+		if err := api.Run(); err != nil {
 			fmt.Printf("server error: %v\n", err)
 		}
 	}()
@@ -66,7 +67,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := appInstance.Shutdown(ctx); err != nil {
+	if err := api.Shutdown(ctx); err != nil {
 		fmt.Printf("Error during shutdown: %v\n", err)
 	}
 
