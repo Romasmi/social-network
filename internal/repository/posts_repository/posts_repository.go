@@ -1,4 +1,4 @@
-package repository
+package posts_repository
 
 import (
 	"context"
@@ -6,11 +6,11 @@ import (
 	"fmt"
 
 	"github.com/Romasmi/social-network/internal/models"
+	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/redis/go-redis/v9"
 )
 
 type PostsRepository interface {
@@ -21,18 +21,17 @@ type PostsRepository interface {
 	GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*models.Post, error)
 }
 
-type PostsRepositoryImpl struct {
-	db    DBQuerier
-	redis *redis.Client
+type postsRepositoryImpl struct {
+	db repository.DBQuerier
 }
 
 const postsTable = "posts"
 
-func CreatePostsRepository(db DBQuerier, redis *redis.Client) PostsRepository {
-	return &PostsRepositoryImpl{db: db, redis: redis}
+func CreatePostsRepository(db repository.DBQuerier) PostsRepository {
+	return &postsRepositoryImpl{db: db}
 }
 
-func (r *PostsRepositoryImpl) CreatePost(ctx context.Context, post *models.Post) (*models.Post, error) {
+func (r *postsRepositoryImpl) CreatePost(ctx context.Context, post *models.Post) (*models.Post, error) {
 	const query = `
         INSERT INTO %s (id, profile_id, text)
         VALUES ($1, $2, $3)
@@ -50,7 +49,7 @@ func (r *PostsRepositoryImpl) CreatePost(ctx context.Context, post *models.Post)
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == pgerrcode.UniqueViolation {
-				return nil, ErrDuplicate
+				return nil, repository.ErrDuplicate
 			}
 			return nil, err
 		}
@@ -59,7 +58,7 @@ func (r *PostsRepositoryImpl) CreatePost(ctx context.Context, post *models.Post)
 	return created, nil
 }
 
-func (r *PostsRepositoryImpl) UpdatePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID, newText string) (*models.Post, error) {
+func (r *postsRepositoryImpl) UpdatePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID, newText string) (*models.Post, error) {
 	const query = `
         UPDATE %s
         SET text = $1
@@ -76,14 +75,14 @@ func (r *PostsRepositoryImpl) UpdatePost(ctx context.Context, postID uuid.UUID, 
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrNotFound
+			return nil, repository.ErrNotFound
 		}
 		return nil, err
 	}
 	return updated, nil
 }
 
-func (r *PostsRepositoryImpl) DeletePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID) error {
+func (r *postsRepositoryImpl) DeletePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID) error {
 	const query = `
         DELETE FROM %s
         WHERE id = $1 AND profile_id = $2
@@ -95,12 +94,12 @@ func (r *PostsRepositoryImpl) DeletePost(ctx context.Context, postID uuid.UUID, 
 		return err
 	}
 	if tag.RowsAffected() == 0 {
-		return ErrNotFound
+		return repository.ErrNotFound
 	}
 	return nil
 }
 
-func (r *PostsRepositoryImpl) GetPost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID) (*models.Post, error) {
+func (r *postsRepositoryImpl) GetPost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID) (*models.Post, error) {
 	const query = `
         SELECT id, profile_id, text
         FROM %s
@@ -117,14 +116,14 @@ func (r *PostsRepositoryImpl) GetPost(ctx context.Context, postID uuid.UUID, pro
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return nil, ErrNotFound
+			return nil, repository.ErrNotFound
 		}
 		return nil, err
 	}
 	return post, nil
 }
 
-func (r *PostsRepositoryImpl) GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*models.Post, error) {
+func (r *postsRepositoryImpl) GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*models.Post, error) {
 	const query = `
 		SELECT *
 		FROM %s
@@ -140,7 +139,7 @@ func (r *PostsRepositoryImpl) GetFeed(ctx context.Context, profileID uuid.UUID, 
 		LIMIT $2
 		OFFSET $3
     `
-	sql := fmt.Sprintf(query, postsTable, profileFriendsTable, profileFriendsTable)
+	sql := fmt.Sprintf(query, postsTable, repository.ProfileFriendsTable, repository.ProfileFriendsTable)
 
 	rows, err := r.db.Query(ctx, sql, profileID, limit, offset)
 	if rows != nil {

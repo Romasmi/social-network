@@ -4,15 +4,15 @@ import (
 	"context"
 
 	"github.com/Romasmi/social-network/internal/models"
-	"github.com/Romasmi/social-network/internal/repository"
+	"github.com/Romasmi/social-network/internal/repository/posts_repository"
 	"github.com/google/uuid"
 )
 
 type PostService struct {
-	postsRepo repository.PostsRepository
+	postsRepo posts_repository.PostsRepository
 }
 
-func CreatePostService(postsRepo repository.PostsRepository) *PostService {
+func CreatePostService(postsRepo posts_repository.PostsRepository) *PostService {
 	return &PostService{postsRepo: postsRepo}
 }
 

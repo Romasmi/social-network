@@ -6,6 +6,7 @@ import (
 	"github.com/Romasmi/social-network/internal/handlers/post_handler"
 	"github.com/Romasmi/social-network/internal/middleware"
 	"github.com/Romasmi/social-network/internal/repository"
+	"github.com/Romasmi/social-network/internal/repository/posts_repository"
 	"github.com/Romasmi/social-network/internal/services"
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -13,7 +14,7 @@ import (
 )
 
 func RegisterPostRoutes(r *mux.Router, db *pgxpool.Pool, rds *redis.Client) {
-	postsRepo := repository.CreatePostsRepository(db, rds)
+	postsRepo := posts_repository.CreatePostsRepository(db)
 	sessionRepo := repository.CreateSessionRepository(db)
 
 	postService := services.CreatePostService(postsRepo)
