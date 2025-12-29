@@ -69,3 +69,73 @@ Name | birdate | Profile
 ```shell
  k6 run --vus 1000 --duration 30s -e TOKEN=<token> load_testing/user_search.js
 ```
+
+## Caching
+### User feed
+`/feed?offset=0&limit=20` returns latest posts of friends.
+It caches latest 1000 posts.
+
+#### On what event to invalidate cache
+| Event       | Action description                                  | Condition                         
+|-------------|-----------------------------------------------------|-----------------------------------|
+| postCreated | push post id to fiends feeds                        |                                   |
+| postUpdated | update post data in cache posts:{postId} {postData} |                                   |
+| postDeleted | delete post from user friends feeds                 |
+| friendAdded | push latest 20 posts to feeds                       | user has posts,  friend has posts |
+| friendDeleted | recreate feed for user and friend                   | user has posts,  friend has posts                  |
+
+#### Caching strategy
+I use `fan-out on write` approach.
+For the sake of simplicity, some steps are omitted.
+##### Get feed
+````mermaid
+sequenceDiagram
+    Client->>API: GET /feed?offset={N}&limit={M}
+    API->>Redis: ZRANGE feed:{userId} N N+M-1 REV
+    Redis-->>API: PostsIds
+    API->>Redis: MGET postId1 postId2 ... postIdN
+    Redis-->>API: Posts
+    API->>DB: Get missed posts by ids
+    API-->>Client: Posts
+    
+````
+
+##### Create feed 
+````mermaid
+sequenceDiagram
+    API->>DB: Get user friends latest posts 
+    DB->>API: User friends posts ids LIMIT 1000
+    API->>Redis: ZADD feed:{userId} {postId1} {postId2} ... {postIdN} 
+    API->>Redis: ZREMRANGEBYRANK feed:{userId} 0 -1001 
+````
+
+##### Create/push_to feed onPostCreated
+I'll use Redis pipeline for batch operation.
+````mermaid
+sequenceDiagram
+    Client->>API: POST /post/create
+    API->>DB: Create post
+    API->>DB: Get user friends
+    DB->>API: User friends ids
+    API->>Redis: ZADD feed:{friendId1} {postId}
+    API->>Redis: ZREMRANGEBYRANK feed:{friendId1} 0 -1001
+    API->>Redis: ZADD feed:{friendId2} {postId}
+    API->>Redis: ZREMRANGEBYRANK feed:{friendId2} 0 -1001
+    API->>Redis: ZADD feed:{friendIdN} {postId}
+    API->>Redis: ZREMRANGEBYRANK feed:{friendIdN} 0 -1001
+    API->>Redis: SET posts:{postId} {postContent}
+    API-->>Client: response
+````
+
+##### Invalidate cache on friendDeleted
+Recreate cache for {userId} if friend has posts.
+Recreate cache for {friendId} if user has posts.
+````mermaid
+sequenceDiagram
+    Client->>API: DELETE /friend/add/{friendId}
+    API->>DB: Delete friend from user friends
+    API->>Redis: DEL feed:{userId} 
+    API->>API: Create feed to {userId}
+    API->>Redis: DEL feed:{friendId}
+    API->>API: Create feed to {friendId}
+````
