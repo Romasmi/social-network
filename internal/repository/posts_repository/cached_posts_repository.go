@@ -114,15 +114,26 @@ func (c *cachedPostsRepositoryImpl) GetFeed(ctx context.Context, profileID uuid.
 		}
 		return posts, nil
 	}
-	feed, err := c.postsRepo.GetFeed(ctx, profileID, limit, offset)
+	fullFeed, err := c.postsRepo.GetFeed(ctx, profileID, cachedFeedLength, 0)
+	if err != nil {
+		return nil, err
+	}
+
 	go func() {
-		err := c.cacheFeed(context.WithoutCancel(ctx), profileID, feed)
+		err := c.cacheFeed(context.WithoutCancel(ctx), profileID, fullFeed)
 		if err != nil {
-			// TODO Add logger
 			fmt.Println(err)
 		}
 	}()
-	return feed, err
+
+	end := offset + limit
+	if end > len(fullFeed) {
+		end = len(fullFeed)
+	}
+	if offset >= len(fullFeed) {
+		return []*models.Post{}, nil
+	}
+	return fullFeed[offset:end], nil
 }
 
 func (c *cachedPostsRepositoryImpl) cachePosts(ctx context.Context, posts []*models.Post) error {
