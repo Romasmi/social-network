@@ -2,9 +2,11 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 type ProfileFriendsRepository struct {
@@ -51,4 +53,39 @@ func (r *ProfileFriendsRepository) DeleteFriend(ctx context.Context, profile1Id,
 		profile2Id,
 	)
 	return err
+}
+
+func (r *ProfileFriendsRepository) GetFriendsIds(ctx context.Context, profileID uuid.UUID) ([]uuid.UUID, error) {
+	const query = `
+			SELECT profile2_id
+			FROM %s
+			WHERE profile1_id = $1
+			UNION
+			SELECT profile1_id
+			FROM %s
+			WHERE profile2_id = $1
+	`
+	sql := fmt.Sprintf(query, ProfileFriendsTable)
+	rows, err := r.db.Query(ctx, sql, profileID)
+	if rows != nil {
+		defer rows.Close()
+	}
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []uuid.UUID{}, nil
+		}
+		return nil, err
+	}
+	ids := []uuid.UUID{}
+	for rows.Next() {
+		id := uuid.UUID{}
+		err := rows.Scan(
+			&id,
+		)
+		if err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
 }
