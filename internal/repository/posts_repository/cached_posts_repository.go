@@ -225,3 +225,17 @@ func (c *cachedPostsRepositoryImpl) getCachedPosts(ctx context.Context, postIds 
 	}
 	return posts, mc, nil
 }
+
+func (c *cachedPostsRepositoryImpl) pushToFriendsFeeds(ctx context.Context, profileId uuid.UUID, posts []*models.Post) {
+	// TODO implement via EDA
+}
+
+func (c *cachedPostsRepositoryImpl) pushToFeeds(ctx context.Context, profileIDs []uuid.UUID, posts []*models.Post) error {
+	for _, v := range profileIDs {
+		err := c.cacheFeed(ctx, v, posts)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
