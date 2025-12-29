@@ -17,7 +17,8 @@ type PostsRepository interface {
 	CreatePost(ctx context.Context, post *models.Post) (*models.Post, error)
 	UpdatePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID, newText string) (*models.Post, error)
 	DeletePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID) error
-	GetPost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID) (*models.Post, error)
+	GetPost(ctx context.Context, postID uuid.UUID) (*models.Post, error)
+	GetPostsByIds(ctx context.Context, postID []uuid.UUID) ([]*models.Post, error)
 	GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*models.Post, error)
 }
 
@@ -99,17 +100,17 @@ func (r *postsRepositoryImpl) DeletePost(ctx context.Context, postID uuid.UUID, 
 	return nil
 }
 
-func (r *postsRepositoryImpl) GetPost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID) (*models.Post, error) {
+func (r *postsRepositoryImpl) GetPost(ctx context.Context, postID uuid.UUID) (*models.Post, error) {
 	const query = `
         SELECT id, profile_id, text
         FROM %s
-        WHERE id = $1 AND profile_id = $2
+        WHERE id = $1
         LIMIT 1
     `
 	sql := fmt.Sprintf(query, postsTable)
 
 	post := &models.Post{}
-	err := r.db.QueryRow(ctx, sql, postID, profileID).Scan(
+	err := r.db.QueryRow(ctx, sql, postID).Scan(
 		&post.ID,
 		&post.ProfileId,
 		&post.Text,
@@ -121,6 +122,40 @@ func (r *postsRepositoryImpl) GetPost(ctx context.Context, postID uuid.UUID, pro
 		return nil, err
 	}
 	return post, nil
+}
+
+func (r *postsRepositoryImpl) GetPostsByIds(ctx context.Context, postIDs []uuid.UUID) ([]*models.Post, error) {
+	const query = `
+        SELECT id, profile_id, text
+        FROM %s
+        WHERE id = ANY($1)
+    `
+	sql := fmt.Sprintf(query, postsTable)
+
+	rows, err := r.db.Query(ctx, sql, postIDs)
+	if rows != nil {
+		defer rows.Close()
+	}
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return []*models.Post{}, nil
+		}
+		return nil, err
+	}
+	posts := []*models.Post{}
+	for rows.Next() {
+		post := &models.Post{}
+		err := rows.Scan(
+			&post.ID,
+			&post.ProfileId,
+			&post.Text,
+		)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+	return posts, nil
 }
 
 func (r *postsRepositoryImpl) GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*models.Post, error) {
