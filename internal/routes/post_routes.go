@@ -14,7 +14,10 @@ import (
 )
 
 func RegisterPostRoutes(r *mux.Router, db *pgxpool.Pool, rds *redis.Client) {
-	postsRepo := posts_repository.CreatePostsRepository(db)
+	postsRepo := posts_repository.CreateCachedPostsRepository(
+		posts_repository.CreatePostsRepository(db),
+		rds,
+	)
 	sessionRepo := repository.CreateSessionRepository(db)
 
 	postService := services.CreatePostService(postsRepo)
