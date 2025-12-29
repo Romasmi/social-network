@@ -140,3 +140,8 @@ sequenceDiagram
     API->>Redis: DEL feed:{friendId}
     API->>API: Create feed to {friendId}
 ````
+
+#### Load testing
+```shell
+k6 run --vus 1000 --duration 30s -e TOKEN="019b6a77-8c9f-7cf8-9a48-f8bd6a714be8" load_testing/get_feed.js
+```
