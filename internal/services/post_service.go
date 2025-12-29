@@ -9,10 +9,10 @@ import (
 )
 
 type PostService struct {
-	postsRepo *repository.PostsRepository
+	postsRepo repository.PostsRepository
 }
 
-func CreatePostService(postsRepo *repository.PostsRepository) *PostService {
+func CreatePostService(postsRepo repository.PostsRepository) *PostService {
 	return &PostService{postsRepo: postsRepo}
 }
 

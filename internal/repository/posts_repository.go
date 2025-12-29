@@ -13,18 +13,26 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type PostsRepository struct {
+type PostsRepository interface {
+	CreatePost(ctx context.Context, post *models.Post) (*models.Post, error)
+	UpdatePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID, newText string) (*models.Post, error)
+	DeletePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID) error
+	GetPost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID) (*models.Post, error)
+	GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*models.Post, error)
+}
+
+type PostsRepositoryImpl struct {
 	db    DBQuerier
 	redis *redis.Client
 }
 
 const postsTable = "posts"
 
-func CreatePostsRepository(db DBQuerier, redis *redis.Client) *PostsRepository {
-	return &PostsRepository{db: db, redis: redis}
+func CreatePostsRepository(db DBQuerier, redis *redis.Client) PostsRepository {
+	return &PostsRepositoryImpl{db: db, redis: redis}
 }
 
-func (r *PostsRepository) CreatePost(ctx context.Context, post *models.Post) (*models.Post, error) {
+func (r *PostsRepositoryImpl) CreatePost(ctx context.Context, post *models.Post) (*models.Post, error) {
 	const query = `
         INSERT INTO %s (id, profile_id, text)
         VALUES ($1, $2, $3)
@@ -51,7 +59,7 @@ func (r *PostsRepository) CreatePost(ctx context.Context, post *models.Post) (*m
 	return created, nil
 }
 
-func (r *PostsRepository) UpdatePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID, newText string) (*models.Post, error) {
+func (r *PostsRepositoryImpl) UpdatePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID, newText string) (*models.Post, error) {
 	const query = `
         UPDATE %s
         SET text = $1
@@ -75,7 +83,7 @@ func (r *PostsRepository) UpdatePost(ctx context.Context, postID uuid.UUID, prof
 	return updated, nil
 }
 
-func (r *PostsRepository) DeletePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID) error {
+func (r *PostsRepositoryImpl) DeletePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID) error {
 	const query = `
         DELETE FROM %s
         WHERE id = $1 AND profile_id = $2
@@ -92,7 +100,7 @@ func (r *PostsRepository) DeletePost(ctx context.Context, postID uuid.UUID, prof
 	return nil
 }
 
-func (r *PostsRepository) GetPost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID) (*models.Post, error) {
+func (r *PostsRepositoryImpl) GetPost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID) (*models.Post, error) {
 	const query = `
         SELECT id, profile_id, text
         FROM %s
@@ -116,7 +124,7 @@ func (r *PostsRepository) GetPost(ctx context.Context, postID uuid.UUID, profile
 	return post, nil
 }
 
-func (r *PostsRepository) GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*models.Post, error) {
+func (r *PostsRepositoryImpl) GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*models.Post, error) {
 	const query = `
 		SELECT *
 		FROM %s
