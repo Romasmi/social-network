@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func RegisterAuthHandlers(r *mux.Router, db *pgxpool.Pool, cng *config.Config) {
+func RegisterAuthHandlers(r *mux.Router, db *pgxpool.Pool) {
 	userRepo := repository.CreateUserRepository(db)
 	sessionRepo := repository.CreateSessionRepository(db)
 	authService := services.CreateAuthService(userRepo, sessionRepo)

@@ -101,7 +101,7 @@ func (a *App) importPosts(context context.Context, link string, profileIdsRaw []
 }
 
 func (a *App) importPost(context context.Context, post *ParsedPost) error {
-	postRepo := repository.CreatePostsRepository(a.DbConn.DB)
+	postRepo := repository.CreatePostsRepository(a.DbConn.DB, a.RedisConn.Rdb)
 	postService := services.CreatePostService(postRepo)
 	_, err := postService.CreatePost(context, post.ProfileId, post.Post)
 	if err != nil {

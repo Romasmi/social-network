@@ -10,16 +10,18 @@ import (
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/redis/go-redis/v9"
 )
 
 type PostsRepository struct {
-	db DBQuerier
+	db    DBQuerier
+	redis *redis.Client
 }
 
 const postsTable = "posts"
 
-func CreatePostsRepository(db DBQuerier) *PostsRepository {
-	return &PostsRepository{db: db}
+func CreatePostsRepository(db DBQuerier, redis *redis.Client) *PostsRepository {
+	return &PostsRepository{db: db, redis: redis}
 }
 
 func (r *PostsRepository) CreatePost(ctx context.Context, post *models.Post) (*models.Post, error) {

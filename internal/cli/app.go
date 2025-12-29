@@ -6,13 +6,15 @@ import (
 
 	"github.com/Romasmi/social-network/internal/config"
 	"github.com/Romasmi/social-network/internal/database"
+	"github.com/Romasmi/social-network/internal/infra/redis"
 	"github.com/spf13/cobra"
 )
 
 type App struct {
-	DbConn *database.DbConnection
-	Config *config.Config
-	Cmd    *cobra.Command
+	DbConn    *database.DbConnection
+	RedisConn *redis.Connection
+	Config    *config.Config
+	Cmd       *cobra.Command
 }
 
 func CreateApp(configPath string) (*App, error) {
@@ -35,8 +37,12 @@ func (a *App) init(configPath string) error {
 	if err = dbConn.Connect(); err != nil {
 		return fmt.Errorf("error connecting to DB: %v\n", err)
 	}
-
 	a.DbConn = dbConn
+
+	redisConn := &redis.Connection{Config: &envConfig.Redis}
+	redisConn.Connect()
+	a.RedisConn = redisConn
+
 	a.Cmd = &cobra.Command{
 		Use:   "social-network",
 		Short: "CLI for managing social network",

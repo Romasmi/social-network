@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func RegisterUserRoutes(r *mux.Router, db *pgxpool.Pool, cng *config.Config) {
+func RegisterUserRoutes(r *mux.Router, db *pgxpool.Pool) {
 	cityRepo := repository.CreateCityRepository(db)
 	profileRepo := repository.CreateProfileRepository(db)
 	profileFriendsRepo := repository.CreateProfileFriendsRepository(db)

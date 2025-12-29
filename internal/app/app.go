@@ -23,6 +23,14 @@ type App struct {
 	server    *http.Server
 }
 
+func (a *App) GetDB() *database.DbConnection {
+	return a.DbConn
+}
+
+func (a *App) GetRedis() *redis.Connection {
+	return a.RedisConn
+}
+
 func CreateApp(configPath string) (*App, error) {
 	app := &App{}
 	err := app.init(configPath)
@@ -51,7 +59,7 @@ func (a *App) init(configPath string) error {
 
 	router := mux.NewRouter()
 
-	routes.RegisterRoutes(router, a.DbConn.DB, envConfig)
+	routes.RegisterRoutes(router, a)
 
 	a.router = router
 	return nil
