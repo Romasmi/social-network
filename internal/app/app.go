@@ -8,13 +8,15 @@ import (
 	"github.com/Romasmi/social-network/internal/config"
 	"github.com/Romasmi/social-network/internal/database"
 	"github.com/Romasmi/social-network/internal/infra/redis"
+	"github.com/Romasmi/social-network/internal/kafka"
 )
 
 type App struct {
-	DbConn    *database.DbConnection
-	RedisConn *redis.Connection
-	Config    *config.Config
-	server    *http.Server
+	DbConn          *database.DbConnection
+	RedisConn       *redis.Connection
+	KafkaConnection *kafka.KafkaConnection
+	Config          *config.Config
+	server          *http.Server
 }
 
 func (a *App) GetDB() *database.DbConnection {
@@ -47,6 +49,12 @@ func (a *App) init(configPath string) error {
 	redisConn.Connect()
 	a.RedisConn = redisConn
 
+	kafkaConn, err := kafka.CreateKafkaConnection(&a.Config.Kafka)
+	if err != nil {
+		return fmt.Errorf("error connecting to Kafka: %v\n", err)
+	}
+	a.KafkaConnection = kafkaConn
+
 	return nil
 }
 
@@ -70,6 +78,8 @@ func (a *App) Shutdown(ctx context.Context) error {
 			a.DbConn.DB.Close()
 		}
 	}
+
+	a.KafkaConnection.Close()
 
 	fmt.Println("Cleanup completed")
 	return shutdownErr

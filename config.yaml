@@ -6,3 +6,9 @@ database:
   minConnection: 2
   maxConnectionLifetime: 60 # seconds
   maxConnectionIdleTime: 1 # minutes
+redis:
+  host: localhost:6379
+  username: user
+  password: password
+kafka:
+  brokers: localhost:9092
