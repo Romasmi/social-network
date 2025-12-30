@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Romasmi/social-network/internal/database"
+	"github.com/Romasmi/social-network/internal/infra/database"
 	"github.com/Romasmi/social-network/internal/infra/redis"
 	"github.com/Romasmi/social-network/internal/middleware"
 	"github.com/Romasmi/social-network/internal/utils"

@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"github.com/Romasmi/social-network/internal/database"
+	"github.com/Romasmi/social-network/internal/infra/database"
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/Romasmi/social-network/internal/repository/posts_repository"
 	"github.com/Romasmi/social-network/internal/services"
