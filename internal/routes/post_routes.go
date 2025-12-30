@@ -3,7 +3,7 @@ package routes
 import (
 	"net/http"
 
-	"github.com/Romasmi/social-network/internal/handlers/post_handler"
+	"github.com/Romasmi/social-network/internal/handlers/http/post_handler"
 	"github.com/Romasmi/social-network/internal/middleware"
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/Romasmi/social-network/internal/repository/posts_repository"
