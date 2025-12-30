@@ -3,7 +3,6 @@ package routes
 import (
 	"net/http"
 
-	"github.com/Romasmi/social-network/internal/config"
 	"github.com/Romasmi/social-network/internal/handlers/user_handler"
 	"github.com/Romasmi/social-network/internal/middleware"
 	"github.com/Romasmi/social-network/internal/repository"
@@ -12,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func RegisterUserRoutes(r *mux.Router, db *pgxpool.Pool, cng *config.Config) {
+func RegisterUserRoutes(r *mux.Router, db *pgxpool.Pool) {
 	cityRepo := repository.CreateCityRepository(db)
 	profileRepo := repository.CreateProfileRepository(db)
 	profileFriendsRepo := repository.CreateProfileFriendsRepository(db)

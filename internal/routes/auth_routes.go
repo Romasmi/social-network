@@ -3,7 +3,6 @@ package routes
 import (
 	"net/http"
 
-	"github.com/Romasmi/social-network/internal/config"
 	"github.com/Romasmi/social-network/internal/handlers/auth_handler"
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/Romasmi/social-network/internal/services"
@@ -11,7 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func RegisterAuthHandlers(r *mux.Router, db *pgxpool.Pool, cng *config.Config) {
+func RegisterAuthHandlers(r *mux.Router, db *pgxpool.Pool) {
 	userRepo := repository.CreateUserRepository(db)
 	sessionRepo := repository.CreateSessionRepository(db)
 	authService := services.CreateAuthService(userRepo, sessionRepo)

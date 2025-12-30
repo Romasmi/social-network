@@ -4,12 +4,17 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Romasmi/social-network/internal/config"
+	"github.com/Romasmi/social-network/internal/database"
+	"github.com/Romasmi/social-network/internal/infra/redis"
 	"github.com/Romasmi/social-network/internal/middleware"
 	"github.com/Romasmi/social-network/internal/utils"
 	"github.com/gorilla/mux"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
+
+type App interface {
+	GetDB() *database.DbConnection
+	GetRedis() *redis.Connection
+}
 
 type NotFoundResponse struct {
 	Error string `json:"error"`
@@ -17,8 +22,7 @@ type NotFoundResponse struct {
 
 func RegisterRoutes(
 	router *mux.Router,
-	db *pgxpool.Pool,
-	config *config.Config,
+	app App,
 ) {
 	if router == nil {
 		panic("router must be initialized before routes registration")
@@ -26,9 +30,9 @@ func RegisterRoutes(
 	router.Use(middleware.ResponseHeadersMiddleware)
 	router.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
 
-	RegisterAuthHandlers(router, db, config)
-	RegisterUserRoutes(router, db, config)
-	RegisterPostRoutes(router, db, config)
+	RegisterAuthHandlers(router, app.GetDB().DB)
+	RegisterUserRoutes(router, app.GetDB().DB)
+	RegisterPostRoutes(router, app.GetDB().DB, app.GetRedis().Rdb)
 }
 
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {

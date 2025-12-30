@@ -2,34 +2,34 @@ package app
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/Romasmi/social-network/internal/config"
 	"github.com/Romasmi/social-network/internal/database"
 	"github.com/Romasmi/social-network/internal/infra/redis"
-	"github.com/Romasmi/social-network/internal/routes"
-	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
+	"github.com/Romasmi/social-network/internal/kafka"
 )
 
 type App struct {
-	DbConn    *database.DbConnection
-	RedisConn *redis.Connection
-	Config    *config.Config
-	router    *mux.Router
-	server    *http.Server
+	DbConn          *database.DbConnection
+	RedisConn       *redis.Connection
+	KafkaConnection *kafka.KafkaConnection
+	Config          *config.Config
+	server          *http.Server
 }
 
-func CreateApp(configPath string) (*App, error) {
+func (a *App) GetDB() *database.DbConnection {
+	return a.DbConn
+}
+
+func (a *App) GetRedis() *redis.Connection {
+	return a.RedisConn
+}
+
+func NewApp(configPath string) (*App, error) {
 	app := &App{}
-	err := app.init(configPath)
-	if err != nil {
-		return nil, err
-	}
-	return app, nil
+	return app, app.init(configPath)
 }
 
 func (a *App) init(configPath string) error {
@@ -49,37 +49,12 @@ func (a *App) init(configPath string) error {
 	redisConn.Connect()
 	a.RedisConn = redisConn
 
-	router := mux.NewRouter()
-
-	routes.RegisterRoutes(router, a.DbConn.DB, envConfig)
-
-	a.router = router
-	return nil
-}
-
-func (a *App) Run() error {
-	credentials := handlers.AllowCredentials()
-	methods := handlers.AllowedMethods([]string{
-		http.MethodGet,
-		http.MethodPost,
-		http.MethodPut,
-		http.MethodDelete,
-		http.MethodOptions,
-	})
-	headers := handlers.AllowedHeaders([]string{
-		"Content-Type",
-		"Authorization",
-	})
-	origins := handlers.AllowedOrigins([]string{"*"})
-
-	a.server = &http.Server{
-		Addr:    ":" + strconv.Itoa(int(a.Config.Server.Port)),
-		Handler: handlers.CORS(credentials, methods, origins, headers)(a.router),
+	kafkaConn, err := kafka.CreateKafkaConnection(&a.Config.Kafka)
+	if err != nil {
+		return fmt.Errorf("error connecting to Kafka: %v\n", err)
 	}
+	a.KafkaConnection = kafkaConn
 
-	if err := a.server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-		return err
-	}
 	return nil
 }
 
@@ -103,6 +78,8 @@ func (a *App) Shutdown(ctx context.Context) error {
 			a.DbConn.DB.Close()
 		}
 	}
+
+	a.KafkaConnection.Close()
 
 	fmt.Println("Cleanup completed")
 	return shutdownErr

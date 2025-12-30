@@ -1,4 +1,4 @@
-package cli
+package commands
 
 import (
 	"context"
@@ -12,8 +12,6 @@ import (
 	"time"
 
 	"github.com/Romasmi/social-network/internal/models"
-	"github.com/Romasmi/social-network/internal/repository"
-	"github.com/Romasmi/social-network/internal/services"
 )
 
 type ParsedUser struct {
@@ -23,7 +21,7 @@ type ParsedUser struct {
 	City       string    `json:"city"`
 }
 
-func (a *App) importUserByLink(context context.Context, link string) error {
+func (h *ImportHandler) ImportUserByLink(context context.Context, link string) error {
 	resp, err := http.Get(link)
 	if err != nil {
 		return err
@@ -55,7 +53,7 @@ func (a *App) importUserByLink(context context.Context, link string) error {
 			}()
 			defer wg.Done()
 			for user := range jobs {
-				if err := a.importUser(context, user); err != nil {
+				if err := h.importUser(context, user); err != nil {
 					errCh <- fmt.Errorf("error while user creation: %v", err)
 				}
 			}
@@ -75,7 +73,7 @@ func (a *App) importUserByLink(context context.Context, link string) error {
 
 			parsed, err := recordIntoModel(record)
 			if err != nil {
-				errCh <- fmt.Errorf("error while parsing a line: %v", err)
+				errCh <- fmt.Errorf("error while parsing h line: %v", err)
 			}
 
 			jobs <- parsed
@@ -123,18 +121,13 @@ func recordIntoModel(record []string) (*ParsedUser, error) {
 	return &user, err
 }
 
-func (a *App) importUser(context context.Context, user *ParsedUser) error {
-	cityRepo := repository.CreateCityRepository(a.DbConn.DB)
-	profileRepo := repository.CreateProfileRepository(a.DbConn.DB)
-	uow := repository.CreateUnitOfWork(a.DbConn.DB)
-	userService := services.CreateUserService(cityRepo, profileRepo, nil, uow)
-
+func (h *ImportHandler) importUser(context context.Context, user *ParsedUser) error {
 	payload := &models.CreateProfileModel{
 		FirstName:  user.FirstName,
 		SecondName: user.SecondName,
 		Birthdate:  user.Birthdate,
 		City:       user.City,
 	}
-	_, err := userService.RegisterUser(context, payload)
+	_, err := h.userService.RegisterUser(context, payload)
 	return err
 }

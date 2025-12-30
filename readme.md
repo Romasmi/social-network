@@ -93,9 +93,10 @@ sequenceDiagram
     Client->>API: GET /feed?offset={N}&limit={M}
     API->>Redis: ZRANGE feed:{userId} N N+M-1 REV
     Redis-->>API: PostsIds
-    API->>Redis: MGET postId1 postId2 ... postIdN
+    API->>Redis: Get posts by ids
     Redis-->>API: Posts
     API->>DB: Get missed posts by ids
+    API->>Redis: Save missed posts to cache
     API-->>Client: Posts
     
 ````
@@ -139,3 +140,8 @@ sequenceDiagram
     API->>Redis: DEL feed:{friendId}
     API->>API: Create feed to {friendId}
 ````
+
+#### Load testing
+```shell
+k6 run --vus 1000 --duration 30s -e TOKEN="019b6a77-8c9f-7cf8-9a48-f8bd6a714be8" load_testing/get_feed.js
+```

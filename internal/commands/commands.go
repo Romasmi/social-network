@@ -1,24 +1,18 @@
-package cli
+package commands
 
 import (
 	"context"
 	"fmt"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/spf13/cobra"
 )
 
-func (a *App) Execute() {
-	if err := a.Cmd.Execute(); err != nil {
-		fmt.Println(os.Stderr, "Error: %s\n", err)
-		os.Exit(1)
-	}
-}
+func RegisterCommands(cmd *cobra.Command, app App) {
+	handler := CreateImportHandler(app)
 
-func (a *App) iniCommands() {
-	a.Cmd.AddCommand(&cobra.Command{
+	cmd.AddCommand(&cobra.Command{
 		Use:   "import",
 		Short: "Import users",
 		Args:  cobra.ExactArgs(2),
@@ -31,16 +25,16 @@ func (a *App) iniCommands() {
 				return err
 			}
 			start := time.Now()
-			err = a.importUserByLink(context.Background(), args[1])
+			err = handler.ImportUserByLink(context.Background(), args[1])
 			fmt.Printf("Import took %v\n", time.Since(start))
 			return err
 		},
 	})
-	a.Cmd.AddCommand(&cobra.Command{
-		Use:     "importPosts",
+	cmd.AddCommand(&cobra.Command{
+		Use:     "ImportPosts",
 		Short:   "Import posts",
 		Long:    "Import posts to user. If multiple users provide then posts will be assigned randomly to provided users",
-		Example: "importPosts https://posts.com/json 019ad582-424c-7316-b98c-eee5bf0f8d08 019ad582-42b3-7340-a5b8-6025ce042c01",
+		Example: "ImportPosts https://posts.com/json 019ad582-424c-7316-b98c-eee5bf0f8d08 019ad582-42b3-7340-a5b8-6025ce042c01",
 		Args:    cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 
@@ -49,7 +43,7 @@ func (a *App) iniCommands() {
 				return err
 			}
 			start := time.Now()
-			err = a.importPosts(context.Background(), args[0], args[1:])
+			err = handler.ImportPosts(context.Background(), args[0], args[1:])
 			fmt.Printf("Import took %v\n", time.Since(start))
 			return err
 		},

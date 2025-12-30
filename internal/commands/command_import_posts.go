@@ -1,4 +1,4 @@
-package cli
+package commands
 
 import (
 	"bufio"
@@ -11,17 +11,15 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/Romasmi/social-network/internal/repository"
-	"github.com/Romasmi/social-network/internal/services"
 	"github.com/google/uuid"
 )
 
-type ParsedPost struct {
+type parsedPost struct {
 	ProfileId uuid.UUID
 	Post      string
 }
 
-func (a *App) importPosts(context context.Context, link string, profileIdsRaw []string) error {
+func (h *ImportHandler) ImportPosts(context context.Context, link string, profileIdsRaw []string) error {
 	resp, err := http.Get(link)
 	if err != nil {
 		return err
@@ -47,7 +45,7 @@ func (a *App) importPosts(context context.Context, link string, profileIdsRaw []
 
 	var wg sync.WaitGroup
 	const maxWorkers = 50
-	jobs := make(chan *ParsedPost, 100)
+	jobs := make(chan *parsedPost, 100)
 	errCh := make(chan error, 10)
 
 	for i := 0; i < maxWorkers; i++ {
@@ -60,7 +58,7 @@ func (a *App) importPosts(context context.Context, link string, profileIdsRaw []
 			}()
 			defer wg.Done()
 			for post := range jobs {
-				if err := a.importPost(context, post); err != nil {
+				if err := h.importPost(context, post); err != nil {
 					errCh <- fmt.Errorf("error while post creation: %v", err)
 				}
 			}
@@ -75,7 +73,7 @@ func (a *App) importPosts(context context.Context, link string, profileIdsRaw []
 				continue
 			}
 
-			post := &ParsedPost{
+			post := &parsedPost{
 				ProfileId: profileIds[rand.Intn(len(profileIds))],
 				Post:      line,
 			}
@@ -100,10 +98,8 @@ func (a *App) importPosts(context context.Context, link string, profileIdsRaw []
 	return nil
 }
 
-func (a *App) importPost(context context.Context, post *ParsedPost) error {
-	postRepo := repository.CreatePostsRepository(a.DbConn.DB)
-	postService := services.CreatePostService(postRepo)
-	_, err := postService.CreatePost(context, post.ProfileId, post.Post)
+func (h *ImportHandler) importPost(context context.Context, post *parsedPost) error {
+	_, err := h.postService.CreatePost(context, post.ProfileId, post.Post)
 	if err != nil {
 		return err
 	}

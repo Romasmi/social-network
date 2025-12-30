@@ -1,4 +1,4 @@
-package main
+package worker
 
 import (
 	"context"
@@ -22,8 +22,13 @@ func main() {
 		fmt.Printf("error while app init: %v", err)
 		os.Exit(1)
 	}
-	cli := app.NewCli(appInstance)
-	cli.Run()
+	worker := app.NewApi(appInstance)
+
+	go func() {
+		if err := worker.Run(); err != nil {
+			fmt.Printf("server error: %v\n", err)
+		}
+	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -34,7 +39,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := cli.Shutdown(ctx); err != nil {
+	if err := worker.Shutdown(ctx); err != nil {
 		fmt.Printf("Error during shutdown: %v\n", err)
 	}
 

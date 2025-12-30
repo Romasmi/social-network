@@ -3,17 +3,21 @@ package routes
 import (
 	"net/http"
 
-	"github.com/Romasmi/social-network/internal/config"
 	"github.com/Romasmi/social-network/internal/handlers/post_handler"
 	"github.com/Romasmi/social-network/internal/middleware"
 	"github.com/Romasmi/social-network/internal/repository"
+	"github.com/Romasmi/social-network/internal/repository/posts_repository"
 	"github.com/Romasmi/social-network/internal/services"
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 )
 
-func RegisterPostRoutes(r *mux.Router, db *pgxpool.Pool, cng *config.Config) {
-	postsRepo := repository.CreatePostsRepository(db)
+func RegisterPostRoutes(r *mux.Router, db *pgxpool.Pool, rds *redis.Client) {
+	postsRepo := posts_repository.CreateCachedPostsRepository(
+		posts_repository.CreatePostsRepository(db),
+		rds,
+	)
 	sessionRepo := repository.CreateSessionRepository(db)
 
 	postService := services.CreatePostService(postsRepo)

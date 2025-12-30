@@ -4,15 +4,15 @@ import (
 	"context"
 
 	"github.com/Romasmi/social-network/internal/models"
-	"github.com/Romasmi/social-network/internal/repository"
+	"github.com/Romasmi/social-network/internal/repository/posts_repository"
 	"github.com/google/uuid"
 )
 
 type PostService struct {
-	postsRepo *repository.PostsRepository
+	postsRepo posts_repository.PostsRepository
 }
 
-func CreatePostService(postsRepo *repository.PostsRepository) *PostService {
+func CreatePostService(postsRepo posts_repository.PostsRepository) *PostService {
 	return &PostService{postsRepo: postsRepo}
 }
 
@@ -37,8 +37,8 @@ func (s *PostService) DeletePost(ctx context.Context, profileID uuid.UUID, postI
 	return s.postsRepo.DeletePost(ctx, postID, profileID)
 }
 
-func (s *PostService) GetPost(ctx context.Context, profileID uuid.UUID, postID uuid.UUID) (*models.Post, error) {
-	return s.postsRepo.GetPost(ctx, postID, profileID)
+func (s *PostService) GetPost(ctx context.Context, postID uuid.UUID) (*models.Post, error) {
+	return s.postsRepo.GetPost(ctx, postID)
 }
 
 func (s *PostService) GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*models.Post, error) {

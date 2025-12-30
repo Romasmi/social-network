@@ -13,8 +13,6 @@ import (
 )
 
 func (h *PostHandler) Get(w http.ResponseWriter, r *http.Request) {
-	profileId, _ := uuid.Parse(r.Context().Value("profileId").(string))
-
 	vars := mux.Vars(r)
 	postIdStr := vars["postId"]
 	postId, err := uuid.Parse(postIdStr)
@@ -23,7 +21,7 @@ func (h *PostHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post, err := h.postService.GetPost(r.Context(), profileId, postId)
+	post, err := h.postService.GetPost(r.Context(), postId)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			utils.JsonErrorNotFound(w)
@@ -38,12 +36,12 @@ func (h *PostHandler) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PostHandler) GetFeed(w http.ResponseWriter, r *http.Request) {
-	profileId, _ := uuid.Parse(r.Context().Value("profileId").(string))
+	profileId := uuid.MustParse(r.Context().Value("profileId").(string))
 	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
 	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
 	posts, err := h.postService.GetFeed(r.Context(), profileId, limit, offset)
 	if err != nil {
-		fmt.Printf("error while getting posts: %v\n", err)
+		fmt.Printf("error while getting feed: %v\n", err)
 		utils.JsonInternalServerError(w)
 		return
 	}
