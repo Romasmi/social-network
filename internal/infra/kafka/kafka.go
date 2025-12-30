@@ -31,7 +31,9 @@ func CreateKafkaConnection(cfg *config.Kafka) (*KafkaConnection, error) {
 
 func (k *KafkaConnection) ConnectProducer() error {
 	configMap := &kafka.ConfigMap{
-		"bootstrap.severs": k.Config.Brokers,
+		"bootstrap.servers": k.Config.Brokers,
+		"acks":              "all",
+		"client.id":         "socialNetwork",
 	}
 
 	producer, err := kafka.NewProducer(configMap)
@@ -62,11 +64,13 @@ func (k *KafkaConnection) Produce(topic string, key, value []byte) error {
 
 func (k *KafkaConnection) ConnectConsumer() error {
 	configMap := &kafka.ConfigMap{
-		"bootstrap.severs": k.Config.Brokers,
+		"bootstrap.servers": k.Config.Brokers,
+		"group.id":          "socialNetworkGroup",
+		"auto.offset.reset": "smallest",
 	}
 	consumer, err := kafka.NewConsumer(configMap)
 	if err != nil {
-		return fmt.Errorf("failed to create Kafka producer: %v", err)
+		return fmt.Errorf("failed to create Kafka consumer: %v", err)
 	}
 	k.Consumer = consumer
 	return nil
