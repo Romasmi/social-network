@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Romasmi/social-network/internal/commands"
+	"github.com/Romasmi/social-network/internal/handlers/cli"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +28,7 @@ func (a *Cli) init() {
 			fmt.Println("Welcome to CLI of Social network")
 		},
 	}
-	commands.RegisterCommands(a.Cmd, a.App)
+	cli.RegisterCommands(a.Cmd, a.App)
 }
 
 func (a *Cli) Run() {

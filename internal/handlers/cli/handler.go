@@ -1,4 +1,4 @@
-package commands
+package cli
 
 import (
 	"context"
@@ -6,8 +6,21 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/Romasmi/social-network/internal/infra/database"
+	"github.com/Romasmi/social-network/internal/repository"
+	"github.com/Romasmi/social-network/internal/repository/posts_repository"
+	"github.com/Romasmi/social-network/internal/services"
 	"github.com/spf13/cobra"
 )
+
+type ImportHandler struct {
+	postService *services.PostService
+	userService *services.UserService
+}
+
+type App interface {
+	GetDB() *database.DbConnection
+}
 
 func RegisterCommands(cmd *cobra.Command, app App) {
 	handler := CreateImportHandler(app)
@@ -48,4 +61,19 @@ func RegisterCommands(cmd *cobra.Command, app App) {
 			return err
 		},
 	})
+}
+
+func CreateImportHandler(app App) *ImportHandler {
+	postRepo := posts_repository.CreatePostsRepository(app.GetDB().DB)
+	postService := services.CreatePostService(postRepo)
+
+	cityRepo := repository.CreateCityRepository(app.GetDB().DB)
+	profileRepo := repository.CreateProfileRepository(app.GetDB().DB)
+	uow := repository.CreateUnitOfWork(app.GetDB().DB)
+	userService := services.CreateUserService(cityRepo, profileRepo, nil, uow)
+
+	return &ImportHandler{
+		postService: postService,
+		userService: userService,
+	}
 }
