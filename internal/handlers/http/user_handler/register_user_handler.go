@@ -6,27 +6,27 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Romasmi/social-network/internal/models"
+	"github.com/Romasmi/social-network/internal/domain/profile"
 	"github.com/Romasmi/social-network/internal/utils"
 )
 
 type CreateUserRequest struct {
-	FirstName  string        `json:"first_name"`
-	SecondName string        `json:"second_name"`
-	Birthdate  string        `json:"birthdate"` // format 2017-02-01
-	Biography  string        `json:"biography"`
-	Gender     models.Gender `json:"gender"`
-	City       string        `json:"city"`
-	Password   string        `json:"password"`
+	FirstName  string         `json:"first_name"`
+	SecondName string         `json:"second_name"`
+	Birthdate  string         `json:"birthdate"` // format 2017-02-01
+	Biography  string         `json:"biography"`
+	Gender     profile.Gender `json:"gender"`
+	City       string         `json:"city"`
+	Password   string         `json:"password"`
 }
 
-func (payload *CreateUserRequest) toModel() (*models.CreateProfileModel, error) {
+func (payload *CreateUserRequest) toModel() (*profile.CreateProfileModel, error) {
 	birthdate, err := time.Parse("2006-01-02", payload.Birthdate)
 	if err != nil {
 		return nil, err
 	}
 
-	return &models.CreateProfileModel{
+	return &profile.CreateProfileModel{
 		FirstName:  payload.FirstName,
 		SecondName: payload.SecondName,
 		Birthdate:  birthdate,

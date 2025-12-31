@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Romasmi/social-network/internal/models"
+	"github.com/Romasmi/social-network/internal/domain/session"
 	"github.com/Romasmi/social-network/internal/services"
 	"github.com/Romasmi/social-network/internal/utils"
 	"github.com/google/uuid"
@@ -38,7 +38,7 @@ func (m *AuthMiddleware) Process(next http.Handler) http.Handler {
 			return
 		}
 
-		session := &models.Session{}
+		session := &session.Session{}
 		isValidSession := false
 		if isValidSession, session, err = m.SessionService.IsValidSession(r.Context(), sessionId); isValidSession == false || err != nil {
 			if err != nil {

@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Romasmi/social-network/internal/database"
+	"github.com/Romasmi/social-network/internal/events"
+	"github.com/Romasmi/social-network/internal/infra/database"
 	"github.com/Romasmi/social-network/internal/infra/redis"
 	"github.com/Romasmi/social-network/internal/middleware"
 	"github.com/Romasmi/social-network/internal/utils"
@@ -12,8 +13,9 @@ import (
 )
 
 type App interface {
-	GetDB() *database.DbConnection
+	GetDB() *database.Connection
 	GetRedis() *redis.Connection
+	GetPublisher() events.Publisher
 }
 
 type NotFoundResponse struct {
@@ -32,7 +34,7 @@ func RegisterRoutes(
 
 	RegisterAuthHandlers(router, app.GetDB().DB)
 	RegisterUserRoutes(router, app.GetDB().DB)
-	RegisterPostRoutes(router, app.GetDB().DB, app.GetRedis().Rdb)
+	RegisterPostRoutes(router, app.GetDB().DB, app.GetRedis().Rdb, app.GetPublisher())
 }
 
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {

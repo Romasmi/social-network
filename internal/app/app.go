@@ -4,27 +4,34 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Romasmi/social-network/internal/config"
-	"github.com/Romasmi/social-network/internal/database"
+	"github.com/Romasmi/social-network/internal/events"
+	"github.com/Romasmi/social-network/internal/infra/database"
+	"github.com/Romasmi/social-network/internal/infra/kafka"
 	"github.com/Romasmi/social-network/internal/infra/redis"
-	"github.com/Romasmi/social-network/internal/kafka"
 )
 
 type App struct {
-	DbConn          *database.DbConnection
+	DbConn          *database.Connection
 	RedisConn       *redis.Connection
-	KafkaConnection *kafka.KafkaConnection
+	KafkaConnection *kafka.Connection
 	Config          *config.Config
+	Publisher       events.Publisher
 	server          *http.Server
 }
 
-func (a *App) GetDB() *database.DbConnection {
+func (a *App) GetDB() *database.Connection {
 	return a.DbConn
 }
 
 func (a *App) GetRedis() *redis.Connection {
 	return a.RedisConn
+}
+
+func (a *App) GetPublisher() events.Publisher {
+	return a.Publisher
 }
 
 func NewApp(configPath string) (*App, error) {
@@ -39,7 +46,7 @@ func (a *App) init(configPath string) error {
 	}
 	a.Config = envConfig
 
-	dbConn := &database.DbConnection{Config: &envConfig.Database}
+	dbConn := &database.Connection{Config: &envConfig.Database}
 	if err = dbConn.Connect(); err != nil {
 		return fmt.Errorf("error connecting to DB: %v\n", err)
 	}
@@ -54,6 +61,8 @@ func (a *App) init(configPath string) error {
 		return fmt.Errorf("error connecting to Kafka: %v\n", err)
 	}
 	a.KafkaConnection = kafkaConn
+
+	a.Publisher = events.NewPublisher(a.KafkaConnection, events.PublisherConfig{})
 
 	return nil
 }
@@ -77,6 +86,10 @@ func (a *App) Shutdown(ctx context.Context) error {
 		default:
 			a.DbConn.DB.Close()
 		}
+	}
+
+	if a.Publisher.Flush(time.Minute*3) != nil {
+		shutdownErr = fmt.Errorf("error flushing events: %w", a.Publisher.Flush(time.Minute*3))
 	}
 
 	a.KafkaConnection.Close()

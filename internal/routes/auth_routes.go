@@ -3,7 +3,7 @@ package routes
 import (
 	"net/http"
 
-	"github.com/Romasmi/social-network/internal/handlers/auth_handler"
+	"github.com/Romasmi/social-network/internal/handlers/http/auth_handler"
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/Romasmi/social-network/internal/services"
 	"github.com/gorilla/mux"

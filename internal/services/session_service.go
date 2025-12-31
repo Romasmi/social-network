@@ -6,7 +6,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Romasmi/social-network/internal/models"
+	"github.com/Romasmi/social-network/internal/domain/session"
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/google/uuid"
 )
@@ -21,7 +21,7 @@ func CreateSessionService(sessionRepo *repository.SessionRepository) *SessionSer
 	return &SessionService{sessionRepo: sessionRepo}
 }
 
-func (s *SessionService) CreateSession(ctx context.Context, userId uuid.UUID, metadata json.RawMessage, ttl time.Duration) (*models.Session, error) {
+func (s *SessionService) CreateSession(ctx context.Context, userId uuid.UUID, metadata json.RawMessage, ttl time.Duration) (*session.Session, error) {
 	// TODO invalidate previous sessions on new login
 	id, err := uuid.NewV7()
 	if err != nil {
@@ -31,7 +31,7 @@ func (s *SessionService) CreateSession(ctx context.Context, userId uuid.UUID, me
 		metadata = json.RawMessage("{}")
 	}
 
-	session := &models.Session{
+	session := &session.Session{
 		ID:        id,
 		UserId:    userId,
 		Metadata:  metadata,
@@ -40,11 +40,11 @@ func (s *SessionService) CreateSession(ctx context.Context, userId uuid.UUID, me
 	return s.sessionRepo.CreateSession(ctx, session)
 }
 
-func (s *SessionService) GetSessionById(ctx context.Context, id uuid.UUID) (*models.Session, error) {
+func (s *SessionService) GetSessionById(ctx context.Context, id uuid.UUID) (*session.Session, error) {
 	return s.sessionRepo.GetSessionById(ctx, id)
 }
 
-func (s *SessionService) IsValidSession(ctx context.Context, sessionId uuid.UUID) (bool, *models.Session, error) {
+func (s *SessionService) IsValidSession(ctx context.Context, sessionId uuid.UUID) (bool, *session.Session, error) {
 	session, err := s.sessionRepo.GetSessionById(ctx, sessionId)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {

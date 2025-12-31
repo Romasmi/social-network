@@ -3,7 +3,7 @@ package services
 import (
 	"context"
 
-	"github.com/Romasmi/social-network/internal/models"
+	"github.com/Romasmi/social-network/internal/domain/session"
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
@@ -26,7 +26,7 @@ func CreateAuthService(userRepo *repository.UserRepository, sessionRepo *reposit
 	}
 }
 
-func (s *AuthService) LoginUser(ctx context.Context, profileId uuid.UUID, passwordHash string) (*models.Session, error) {
+func (s *AuthService) LoginUser(ctx context.Context, profileId uuid.UUID, passwordHash string) (*session.Session, error) {
 	user, err := s.UserRepo.GetUserByProfileId(ctx, profileId)
 	if err != nil {
 		// TODO process other types of errors

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Romasmi/social-network/internal/models"
+	"github.com/Romasmi/social-network/internal/domain/session"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -21,7 +21,7 @@ func CreateSessionRepository(db *pgxpool.Pool) *SessionRepository {
 	return &SessionRepository{db: db}
 }
 
-func (r *SessionRepository) CreateSession(ctx context.Context, s *models.Session) (*models.Session, error) {
+func (r *SessionRepository) CreateSession(ctx context.Context, s *session.Session) (*session.Session, error) {
 	const query = `
 		INSERT INTO %s (id, user_id, metadata, expires_at)
 		VALUES ($1, $2, $3::jsonb, $4)
@@ -29,7 +29,7 @@ func (r *SessionRepository) CreateSession(ctx context.Context, s *models.Session
 	`
 	sql := fmt.Sprintf(query, sessionsTable)
 
-	created := &models.Session{}
+	created := &session.Session{}
 	err := r.db.QueryRow(ctx, sql, s.ID, s.UserId, s.Metadata, s.ExpiresAt).Scan(
 		&created.ID,
 		&created.UserId,
@@ -43,7 +43,7 @@ func (r *SessionRepository) CreateSession(ctx context.Context, s *models.Session
 	return created, nil
 }
 
-func (r *SessionRepository) GetSessionById(ctx context.Context, id uuid.UUID) (*models.Session, error) {
+func (r *SessionRepository) GetSessionById(ctx context.Context, id uuid.UUID) (*session.Session, error) {
 	const query = `
 		SELECT s.id, s.user_id, s.metadata, s.expires_at, s.created_at, p.id as profile_id
 		FROM %s AS s
@@ -53,7 +53,7 @@ func (r *SessionRepository) GetSessionById(ctx context.Context, id uuid.UUID) (*
 	`
 	sql := fmt.Sprintf(query, sessionsTable)
 
-	s := &models.Session{}
+	s := &session.Session{}
 	err := r.db.QueryRow(ctx, sql, id).Scan(
 		&s.ID,
 		&s.UserId,
