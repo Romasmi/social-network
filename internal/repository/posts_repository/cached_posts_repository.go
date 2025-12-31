@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Romasmi/social-network/internal/models"
+	"github.com/Romasmi/social-network/internal/domain/post"
+	"github.com/Romasmi/social-network/internal/events"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
@@ -23,32 +24,39 @@ type missedCache []struct {
 type cachedPostsRepositoryImpl struct {
 	postsRepo PostsRepository
 	redis     *redis.Client
+	publisher events.Publisher
 }
 
-func (c *cachedPostsRepositoryImpl) GetPostsByIds(ctx context.Context, postIDs []uuid.UUID) ([]*models.Post, error) {
+func (c *cachedPostsRepositoryImpl) GetPostsByIds(ctx context.Context, postIDs []uuid.UUID) ([]*post.Post, error) {
 	return c.postsRepo.GetPostsByIds(ctx, postIDs)
 }
 
-func CreateCachedPostsRepository(postsRepo PostsRepository, rds *redis.Client) PostsRepository {
-	return &cachedPostsRepositoryImpl{postsRepo: postsRepo, redis: rds}
+func CreateCachedPostsRepository(postsRepo PostsRepository, rds *redis.Client, publisher events.Publisher) PostsRepository {
+	return &cachedPostsRepositoryImpl{postsRepo: postsRepo, redis: rds, publisher: publisher}
 }
 
-func (c *cachedPostsRepositoryImpl) CreatePost(ctx context.Context, post *models.Post) (*models.Post, error) {
-	created, err := c.postsRepo.CreatePost(ctx, post)
+func (c *cachedPostsRepositoryImpl) CreatePost(ctx context.Context, p *post.Post) (*post.Post, error) {
+	created, err := c.postsRepo.CreatePost(ctx, p)
 	if err != nil {
 		return nil, err
 	}
-	// TODO push post to friends feeds
+	_ = c.publisher.Publish(ctx, post.NewPostCreatedEvent(&post.CreatedEventData{
+		PostID:    p.ID,
+		ProfileID: p.ProfileId,
+		Text:      p.Text,
+	}))
+	// TODO push p to friends feeds
+
 	return created, err
 }
 
-func (c *cachedPostsRepositoryImpl) UpdatePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID, newText string) (*models.Post, error) {
+func (c *cachedPostsRepositoryImpl) UpdatePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID, newText string) (*post.Post, error) {
 	updated, err := c.postsRepo.UpdatePost(ctx, postID, profileID, newText)
 	if err != nil {
 		return nil, err
 	}
 	go func() {
-		err := c.cachePosts(context.WithoutCancel(ctx), []*models.Post{updated})
+		err := c.cachePosts(context.WithoutCancel(ctx), []*post.Post{updated})
 		if err != nil {
 			// TODO Add logger
 			fmt.Println(err)
@@ -59,11 +67,16 @@ func (c *cachedPostsRepositoryImpl) UpdatePost(ctx context.Context, postID uuid.
 
 func (c *cachedPostsRepositoryImpl) DeletePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID) error {
 	c.redis.Del(ctx, getPostKey(postID))
+	_ = c.publisher.Publish(ctx, post.NewPostDeletedEvent(&post.DeletedEventData{
+		PostID:    postID,
+		ProfileID: profileID,
+	}))
 	// TODO remove from friends feeds
+
 	return c.postsRepo.DeletePost(ctx, postID, profileID)
 }
 
-func (c *cachedPostsRepositoryImpl) GetPost(ctx context.Context, postID uuid.UUID) (*models.Post, error) {
+func (c *cachedPostsRepositoryImpl) GetPost(ctx context.Context, postID uuid.UUID) (*post.Post, error) {
 	post, _, err := c.getCachedPosts(ctx, []string{postID.String()})
 	if err != nil {
 		return nil, err
@@ -74,7 +87,7 @@ func (c *cachedPostsRepositoryImpl) GetPost(ctx context.Context, postID uuid.UUI
 	return c.postsRepo.GetPost(ctx, postID)
 }
 
-func (c *cachedPostsRepositoryImpl) GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*models.Post, error) {
+func (c *cachedPostsRepositoryImpl) GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*post.Post, error) {
 	if offset+limit > cachedFeedLength {
 		return c.postsRepo.GetFeed(ctx, profileID, limit, offset)
 	}
@@ -96,7 +109,7 @@ func (c *cachedPostsRepositoryImpl) GetFeed(ctx context.Context, profileID uuid.
 		if err != nil {
 			return nil, err
 		}
-		results := make(map[uuid.UUID]*models.Post, len(missedCachePosts))
+		results := make(map[uuid.UUID]*post.Post, len(missedCachePosts))
 		for _, v := range missedCachePosts {
 			results[v.ID] = v
 		}
@@ -131,12 +144,12 @@ func (c *cachedPostsRepositoryImpl) GetFeed(ctx context.Context, profileID uuid.
 		end = len(fullFeed)
 	}
 	if offset >= len(fullFeed) {
-		return []*models.Post{}, nil
+		return []*post.Post{}, nil
 	}
 	return fullFeed[offset:end], nil
 }
 
-func (c *cachedPostsRepositoryImpl) cachePosts(ctx context.Context, posts []*models.Post) error {
+func (c *cachedPostsRepositoryImpl) cachePosts(ctx context.Context, posts []*post.Post) error {
 	p := c.redis.Pipeline()
 	for _, v := range posts {
 		postToCache, err := json.Marshal(v)
@@ -158,7 +171,7 @@ func (c *cachedPostsRepositoryImpl) cachePosts(ctx context.Context, posts []*mod
 	return nil
 }
 
-func (c *cachedPostsRepositoryImpl) cacheFeed(ctx context.Context, profileID uuid.UUID, posts []*models.Post) error {
+func (c *cachedPostsRepositoryImpl) cacheFeed(ctx context.Context, profileID uuid.UUID, posts []*post.Post) error {
 	if len(posts) == 0 {
 		return nil
 	}
@@ -186,7 +199,7 @@ func (c *cachedPostsRepositoryImpl) cacheFeed(ctx context.Context, profileID uui
 	return nil
 }
 
-func (c *cachedPostsRepositoryImpl) getCachedPosts(ctx context.Context, postIds []string) ([]*models.Post, missedCache, error) {
+func (c *cachedPostsRepositoryImpl) getCachedPosts(ctx context.Context, postIds []string) ([]*post.Post, missedCache, error) {
 	keys := make([]string, len(postIds))
 	for i, v := range postIds {
 		keys[i] = getPostKey(uuid.MustParse(v))
@@ -196,7 +209,7 @@ func (c *cachedPostsRepositoryImpl) getCachedPosts(ctx context.Context, postIds 
 		return nil, nil, err
 	}
 	mc := make(missedCache, 0, len(postIds))
-	posts := make([]*models.Post, len(postIds))
+	posts := make([]*post.Post, len(postIds))
 	for i, v := range postsCache {
 		if v == nil {
 			mc = append(mc, struct {
@@ -213,7 +226,7 @@ func (c *cachedPostsRepositoryImpl) getCachedPosts(ctx context.Context, postIds 
 			}{i, uuid.MustParse(postIds[i])})
 			continue
 		}
-		var post *models.Post
+		var post *post.Post
 		if err := json.Unmarshal([]byte(data), &post); err != nil {
 			mc = append(mc, struct {
 				i  int
@@ -226,11 +239,11 @@ func (c *cachedPostsRepositoryImpl) getCachedPosts(ctx context.Context, postIds 
 	return posts, mc, nil
 }
 
-func (c *cachedPostsRepositoryImpl) pushToFriendsFeeds(ctx context.Context, profileId uuid.UUID, posts []*models.Post) {
+func (c *cachedPostsRepositoryImpl) pushToFriendsFeeds(ctx context.Context, profileId uuid.UUID, posts []*post.Post) {
 	// TODO implement via EDA
 }
 
-func (c *cachedPostsRepositoryImpl) pushToFeeds(ctx context.Context, profileIDs []uuid.UUID, posts []*models.Post) error {
+func (c *cachedPostsRepositoryImpl) pushToFeeds(ctx context.Context, profileIDs []uuid.UUID, posts []*post.Post) error {
 	for _, v := range profileIDs {
 		err := c.cacheFeed(ctx, v, posts)
 		if err != nil {

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Romasmi/social-network/internal/models"
+	"github.com/Romasmi/social-network/internal/domain/city"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -21,7 +21,7 @@ func CreateCityRepository(db *pgxpool.Pool) *CityRepository {
 }
 
 // GetCityByName For simplicity assume that each city name is unique so it can return city by only single name
-func (r *CityRepository) GetCityByName(ctx context.Context, name string) (*models.City, error) {
+func (r *CityRepository) GetCityByName(ctx context.Context, name string) (*city.City, error) {
 	const query = `
 		SELECT id, name, country_code, state_province, created_at
         FROM %s
@@ -30,32 +30,32 @@ func (r *CityRepository) GetCityByName(ctx context.Context, name string) (*model
 	`
 	sql := fmt.Sprintf(query, citiesTable)
 
-	city := &models.City{}
+	cityModel := &city.City{}
 	err := r.db.QueryRow(ctx, sql, name).Scan(
-		&city.ID,
-		&city.Name,
-		&city.CountryCode,
-		&city.StateProvince,
-		&city.CreatedAt,
+		&cityModel.ID,
+		&cityModel.Name,
+		&cityModel.CountryCode,
+		&cityModel.StateProvince,
+		&cityModel.CreatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
 		}
-		return nil, fmt.Errorf("failed to get city by %s: %w", name, err)
+		return nil, fmt.Errorf("failed to get cityModel by %s: %w", name, err)
 	}
-	return city, nil
+	return cityModel, nil
 }
 
-func (r *CityRepository) CreateCity(ctx context.Context, city *models.City) (*models.City, error) {
+func (r *CityRepository) CreateCity(ctx context.Context, cityModel *city.City) (*city.City, error) {
 	const query = `
 		INSERT INTO %s (id, name, country_code, state_province)
 		VALUES ($1, $2, $3, $4)
 		RETURNING id, name, country_code, state_province, created_at
 	`
 	sql := fmt.Sprintf(query, citiesTable)
-	created := &models.City{}
-	err := r.db.QueryRow(ctx, sql, city.ID, city.Name, city.CountryCode, city.StateProvince).Scan(
+	created := &city.City{}
+	err := r.db.QueryRow(ctx, sql, cityModel.ID, cityModel.Name, cityModel.CountryCode, cityModel.StateProvince).Scan(
 		&created.ID,
 		&created.Name,
 		&created.CountryCode,
@@ -63,7 +63,7 @@ func (r *CityRepository) CreateCity(ctx context.Context, city *models.City) (*mo
 		&created.CreatedAt,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create city: %w", err)
+		return nil, fmt.Errorf("failed to create cityModel: %w", err)
 	}
 	return created, nil
 }

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Romasmi/social-network/internal/models"
+	"github.com/Romasmi/social-network/internal/domain/profile"
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/Romasmi/social-network/internal/utils"
 	"github.com/google/uuid"
@@ -42,7 +42,7 @@ func (h *UserHandler) GetUserHandler(w http.ResponseWriter, r *http.Request) {
 
 func (h *UserHandler) SearchUserHandler(w http.ResponseWriter, r *http.Request) {
 	queryParams := r.URL.Query()
-	userSearchData := &models.UserSearchParams{
+	userSearchData := &profile.UserSearchParams{
 		FirstName:  queryParams.Get("first_name"),
 		SecondName: queryParams.Get("last_name"),
 	}

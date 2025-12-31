@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Romasmi/social-network/internal/models"
+	"github.com/Romasmi/social-network/internal/domain/profile"
 	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5"
@@ -24,7 +24,7 @@ func CreateProfileRepository(db DBQuerier) *ProfileRepository {
 	return &ProfileRepository{db: db}
 }
 
-func (r *ProfileRepository) CreateProfile(ctx context.Context, profile *models.Profile) (*models.Profile, error) {
+func (r *ProfileRepository) CreateProfile(ctx context.Context, profileModel *profile.Profile) (*profile.Profile, error) {
 	const query = `
 		INSERT INTO %s (id, user_id, first_name, second_name, birthdate, gender, biography, city_id)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
@@ -32,18 +32,18 @@ func (r *ProfileRepository) CreateProfile(ctx context.Context, profile *models.P
 	`
 	sql := fmt.Sprintf(query, profilesTable)
 
-	newProfile := &models.Profile{}
+	newProfile := &profile.Profile{}
 	err := r.db.QueryRow(
 		ctx,
 		sql,
-		profile.ID,
-		profile.UserId,
-		profile.FirstName,
-		profile.SecondName,
-		profile.Birthdate,
-		profile.Gender,
-		profile.Biography,
-		profile.CityId).Scan(
+		profileModel.ID,
+		profileModel.UserId,
+		profileModel.FirstName,
+		profileModel.SecondName,
+		profileModel.Birthdate,
+		profileModel.Gender,
+		profileModel.Biography,
+		profileModel.CityId).Scan(
 		&newProfile.ID,
 		&newProfile.UserId,
 		&newProfile.FirstName,
@@ -66,7 +66,7 @@ func (r *ProfileRepository) CreateProfile(ctx context.Context, profile *models.P
 	return newProfile, nil
 }
 
-func (r *ProfileRepository) GetProfileByProfileId(ctx context.Context, profileId uuid.UUID) (*models.Profile, error) {
+func (r *ProfileRepository) GetProfileByProfileId(ctx context.Context, profileId uuid.UUID) (*profile.Profile, error) {
 	const query = `
 		SELECT id, user_id, first_name, second_name, birthdate, gender, biography, city_id
         FROM %s
@@ -75,7 +75,7 @@ func (r *ProfileRepository) GetProfileByProfileId(ctx context.Context, profileId
 	`
 	sql := fmt.Sprintf(query, profilesTable)
 
-	profile := &models.Profile{}
+	profile := &profile.Profile{}
 	err := r.db.QueryRow(ctx, sql, profileId).Scan(
 		&profile.ID,
 		&profile.UserId,
@@ -95,7 +95,7 @@ func (r *ProfileRepository) GetProfileByProfileId(ctx context.Context, profileId
 	return profile, nil
 }
 
-func (r *ProfileRepository) SearchProfile(ctx context.Context, queryParams *models.UserSearchParams) ([]*models.Profile, error) {
+func (r *ProfileRepository) SearchProfile(ctx context.Context, queryParams *profile.UserSearchParams) ([]*profile.Profile, error) {
 	query := `
 		SELECT id, user_id, first_name, second_name, birthdate, gender, biography, city_id 
 		FROM ` + profilesTable
@@ -128,9 +128,9 @@ func (r *ProfileRepository) SearchProfile(ctx context.Context, queryParams *mode
 	}
 	defer rows.Close()
 
-	profiles := make([]*models.Profile, 0)
+	profiles := make([]*profile.Profile, 0)
 	for rows.Next() {
-		profile := &models.Profile{}
+		profile := &profile.Profile{}
 		err := rows.Scan(
 			&profile.ID,
 			&profile.UserId,

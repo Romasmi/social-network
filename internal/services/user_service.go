@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Romasmi/social-network/internal/models"
+	"github.com/Romasmi/social-network/internal/domain/city"
+	"github.com/Romasmi/social-network/internal/domain/profile"
+	"github.com/Romasmi/social-network/internal/domain/user"
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
@@ -27,7 +29,7 @@ func CreateUserService(
 	return &UserService{cityRepo: cityRepo, profileRepo: profileRepo, profileFriendsRepo: profileFriendRepo, uow: uow}
 }
 
-func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreateProfileModel) (*models.Profile, error) {
+func (s *UserService) RegisterUser(ctx context.Context, payload *profile.CreateProfileModel) (*profile.Profile, error) {
 	userId, err := uuid.NewV7()
 	if err != nil {
 		return nil, err
@@ -43,7 +45,7 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreatePr
 		return nil, err
 	}
 
-	city, err := s.cityRepo.GetCityByName(ctx, payload.City)
+	cityModel, err := s.cityRepo.GetCityByName(ctx, payload.City)
 	if err != nil {
 		if !errors.Is(err, repository.ErrNotFound) {
 			return nil, err
@@ -53,7 +55,7 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreatePr
 			return nil, err
 		}
 
-		city, err = s.cityRepo.CreateCity(ctx, &models.City{
+		cityModel, err = s.cityRepo.CreateCity(ctx, &city.City{
 			ID:   cityId,
 			Name: payload.City,
 		})
@@ -63,13 +65,13 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreatePr
 
 	}
 
-	var newUser models.User
+	var newUser user.User
 	newUser.ID = userId
 	newUser.Email = gofakeit.Email() // Generate email just as example
 	newUser.IsActive = true
 	newUser.PasswordHash = string(passwordHash)
 
-	var newProfile models.Profile
+	var newProfile profile.Profile
 	newProfile.ID = profileId
 	newProfile.UserId = userId
 	newProfile.FirstName = payload.FirstName
@@ -77,8 +79,8 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreatePr
 	newProfile.Birthdate = payload.Birthdate
 	newProfile.Gender = payload.Gender
 	newProfile.Biography = payload.Biography
-	newProfile.CityId = city.ID
-	newProfile.City = city.Name
+	newProfile.CityId = cityModel.ID
+	newProfile.City = cityModel.Name
 
 	err = s.uow.WithTransaction(ctx, func(ctx context.Context, txUoW repository.UnitOfWork) error {
 		userRepo := txUoW.User()
@@ -93,17 +95,17 @@ func (s *UserService) RegisterUser(ctx context.Context, payload *models.CreatePr
 		if err != nil {
 			return fmt.Errorf("can't create profile: %w", err)
 		}
-		profile.City = city.Name
+		profile.City = cityModel.Name
 		return nil
 	})
 	return &newProfile, err
 }
 
-func (s *UserService) GetUserByProfileId(ctx context.Context, profileId uuid.UUID) (*models.Profile, error) {
+func (s *UserService) GetUserByProfileId(ctx context.Context, profileId uuid.UUID) (*profile.Profile, error) {
 	return s.profileRepo.GetProfileByProfileId(ctx, profileId)
 }
 
-func (s *UserService) SearchUsers(ctx context.Context, queryParams *models.UserSearchParams) ([]*models.Profile, error) {
+func (s *UserService) SearchUsers(ctx context.Context, queryParams *profile.UserSearchParams) ([]*profile.Profile, error) {
 	return s.profileRepo.SearchProfile(ctx, queryParams)
 }
 

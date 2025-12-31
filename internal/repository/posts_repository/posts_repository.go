@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/Romasmi/social-network/internal/models"
+	"github.com/Romasmi/social-network/internal/domain/post"
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/google/uuid"
 	"github.com/jackc/pgerrcode"
@@ -14,12 +14,12 @@ import (
 )
 
 type PostsRepository interface {
-	CreatePost(ctx context.Context, post *models.Post) (*models.Post, error)
-	UpdatePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID, newText string) (*models.Post, error)
+	CreatePost(ctx context.Context, post *post.Post) (*post.Post, error)
+	UpdatePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID, newText string) (*post.Post, error)
 	DeletePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID) error
-	GetPost(ctx context.Context, postID uuid.UUID) (*models.Post, error)
-	GetPostsByIds(ctx context.Context, postID []uuid.UUID) ([]*models.Post, error)
-	GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*models.Post, error)
+	GetPost(ctx context.Context, postID uuid.UUID) (*post.Post, error)
+	GetPostsByIds(ctx context.Context, postID []uuid.UUID) ([]*post.Post, error)
+	GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*post.Post, error)
 }
 
 type postsRepositoryImpl struct {
@@ -32,7 +32,7 @@ func CreatePostsRepository(db repository.DBQuerier) PostsRepository {
 	return &postsRepositoryImpl{db: db}
 }
 
-func (r *postsRepositoryImpl) CreatePost(ctx context.Context, post *models.Post) (*models.Post, error) {
+func (r *postsRepositoryImpl) CreatePost(ctx context.Context, postModel *post.Post) (*post.Post, error) {
 	const query = `
         INSERT INTO %s (id, profile_id, text)
         VALUES ($1, $2, $3)
@@ -40,8 +40,8 @@ func (r *postsRepositoryImpl) CreatePost(ctx context.Context, post *models.Post)
     `
 	sql := fmt.Sprintf(query, postsTable)
 
-	created := &models.Post{}
-	err := r.db.QueryRow(ctx, sql, post.ID, post.ProfileId, post.Text).Scan(
+	created := &post.Post{}
+	err := r.db.QueryRow(ctx, sql, postModel.ID, postModel.ProfileId, postModel.Text).Scan(
 		&created.ID,
 		&created.ProfileId,
 		&created.Text,
@@ -59,7 +59,7 @@ func (r *postsRepositoryImpl) CreatePost(ctx context.Context, post *models.Post)
 	return created, nil
 }
 
-func (r *postsRepositoryImpl) UpdatePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID, newText string) (*models.Post, error) {
+func (r *postsRepositoryImpl) UpdatePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID, newText string) (*post.Post, error) {
 	const query = `
         UPDATE %s
         SET text = $1
@@ -68,7 +68,7 @@ func (r *postsRepositoryImpl) UpdatePost(ctx context.Context, postID uuid.UUID, 
     `
 	sql := fmt.Sprintf(query, postsTable)
 
-	updated := &models.Post{}
+	updated := &post.Post{}
 	err := r.db.QueryRow(ctx, sql, newText, postID, profileID).Scan(
 		&updated.ID,
 		&updated.ProfileId,
@@ -100,7 +100,7 @@ func (r *postsRepositoryImpl) DeletePost(ctx context.Context, postID uuid.UUID, 
 	return nil
 }
 
-func (r *postsRepositoryImpl) GetPost(ctx context.Context, postID uuid.UUID) (*models.Post, error) {
+func (r *postsRepositoryImpl) GetPost(ctx context.Context, postID uuid.UUID) (*post.Post, error) {
 	const query = `
         SELECT id, profile_id, text
         FROM %s
@@ -109,7 +109,7 @@ func (r *postsRepositoryImpl) GetPost(ctx context.Context, postID uuid.UUID) (*m
     `
 	sql := fmt.Sprintf(query, postsTable)
 
-	post := &models.Post{}
+	post := &post.Post{}
 	err := r.db.QueryRow(ctx, sql, postID).Scan(
 		&post.ID,
 		&post.ProfileId,
@@ -124,7 +124,7 @@ func (r *postsRepositoryImpl) GetPost(ctx context.Context, postID uuid.UUID) (*m
 	return post, nil
 }
 
-func (r *postsRepositoryImpl) GetPostsByIds(ctx context.Context, postIDs []uuid.UUID) ([]*models.Post, error) {
+func (r *postsRepositoryImpl) GetPostsByIds(ctx context.Context, postIDs []uuid.UUID) ([]*post.Post, error) {
 	const query = `
         SELECT id, profile_id, text
         FROM %s
@@ -138,13 +138,13 @@ func (r *postsRepositoryImpl) GetPostsByIds(ctx context.Context, postIDs []uuid.
 	}
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return []*models.Post{}, nil
+			return []*post.Post{}, nil
 		}
 		return nil, err
 	}
-	posts := []*models.Post{}
+	posts := []*post.Post{}
 	for rows.Next() {
-		post := &models.Post{}
+		post := &post.Post{}
 		err := rows.Scan(
 			&post.ID,
 			&post.ProfileId,
@@ -158,7 +158,7 @@ func (r *postsRepositoryImpl) GetPostsByIds(ctx context.Context, postIDs []uuid.
 	return posts, nil
 }
 
-func (r *postsRepositoryImpl) GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*models.Post, error) {
+func (r *postsRepositoryImpl) GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*post.Post, error) {
 	const query = `
 		SELECT *
 		FROM %s
@@ -182,13 +182,13 @@ func (r *postsRepositoryImpl) GetFeed(ctx context.Context, profileID uuid.UUID, 
 	}
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return []*models.Post{}, nil
+			return []*post.Post{}, nil
 		}
 		return nil, err
 	}
-	posts := []*models.Post{}
+	posts := []*post.Post{}
 	for rows.Next() {
-		post := &models.Post{}
+		post := &post.Post{}
 		err := rows.Scan(
 			&post.ID,
 			&post.ProfileId,

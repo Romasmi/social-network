@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Romasmi/social-network/internal/models"
+	"github.com/Romasmi/social-network/internal/domain/profile"
 )
 
 type ParsedUser struct {
@@ -122,7 +122,7 @@ func recordIntoModel(record []string) (*ParsedUser, error) {
 }
 
 func (h *ImportHandler) importUser(context context.Context, user *ParsedUser) error {
-	payload := &models.CreateProfileModel{
+	payload := &profile.CreateProfileModel{
 		FirstName:  user.FirstName,
 		SecondName: user.SecondName,
 		Birthdate:  user.Birthdate,

@@ -1,4 +1,4 @@
-package models
+package session
 
 import (
 	"encoding/json"
