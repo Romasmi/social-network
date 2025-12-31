@@ -12,12 +12,12 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type DbConnection struct {
+type Connection struct {
 	DB     *pgxpool.Pool
 	Config *config.Database
 }
 
-func (c *DbConnection) Connect() error {
+func (c *Connection) Connect() error {
 	pgConfig, err := pgxpool.ParseConfig(c.Config.URL)
 	if err != nil {
 		return fmt.Errorf("unable to parse database URL: %w", err)
@@ -42,14 +42,14 @@ func (c *DbConnection) Connect() error {
 	return nil
 }
 
-func (c *DbConnection) Close() {
+func (c *Connection) Close() {
 	if c.DB != nil {
 		c.DB.Close()
 		log.Println("database connection closed")
 	}
 }
 
-func (c *DbConnection) Ping() error {
+func (c *Connection) Ping() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
 	return c.DB.Ping(ctx)

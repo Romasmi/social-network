@@ -12,14 +12,14 @@ import (
 )
 
 type App struct {
-	DbConn          *database.DbConnection
+	DbConn          *database.Connection
 	RedisConn       *redis.Connection
-	KafkaConnection *kafka.KafkaConnection
+	KafkaConnection *kafka.Connection
 	Config          *config.Config
 	server          *http.Server
 }
 
-func (a *App) GetDB() *database.DbConnection {
+func (a *App) GetDB() *database.Connection {
 	return a.DbConn
 }
 
@@ -39,7 +39,7 @@ func (a *App) init(configPath string) error {
 	}
 	a.Config = envConfig
 
-	dbConn := &database.DbConnection{Config: &envConfig.Database}
+	dbConn := &database.Connection{Config: &envConfig.Database}
 	if err = dbConn.Connect(); err != nil {
 		return fmt.Errorf("error connecting to DB: %v\n", err)
 	}

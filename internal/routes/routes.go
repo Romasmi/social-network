@@ -12,7 +12,7 @@ import (
 )
 
 type App interface {
-	GetDB() *database.DbConnection
+	GetDB() *database.Connection
 	GetRedis() *redis.Connection
 }
 

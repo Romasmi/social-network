@@ -8,14 +8,14 @@ import (
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-type KafkaConnection struct {
+type Connection struct {
 	Consumer *kafka.Consumer
 	Producer *kafka.Producer
 	Config   *config.Kafka
 }
 
-func CreateKafkaConnection(cfg *config.Kafka) (*KafkaConnection, error) {
-	connection := &KafkaConnection{
+func CreateKafkaConnection(cfg *config.Kafka) (*Connection, error) {
+	connection := &Connection{
 		Config: cfg,
 	}
 	err := connection.ConnectProducer()
@@ -29,7 +29,7 @@ func CreateKafkaConnection(cfg *config.Kafka) (*KafkaConnection, error) {
 	return connection, nil
 }
 
-func (k *KafkaConnection) ConnectProducer() error {
+func (k *Connection) ConnectProducer() error {
 	configMap := &kafka.ConfigMap{
 		"bootstrap.servers": k.Config.Brokers,
 		"acks":              "all",
@@ -46,7 +46,7 @@ func (k *KafkaConnection) ConnectProducer() error {
 	return nil
 }
 
-func (k *KafkaConnection) Produce(topic string, key, value []byte) error {
+func (k *Connection) Produce(topic string, key, value []byte) error {
 	message := &kafka.Message{
 		TopicPartition: kafka.TopicPartition{
 			Topic:     &topic,
@@ -62,7 +62,7 @@ func (k *KafkaConnection) Produce(topic string, key, value []byte) error {
 	return nil
 }
 
-func (k *KafkaConnection) ConnectConsumer() error {
+func (k *Connection) ConnectConsumer() error {
 	configMap := &kafka.ConfigMap{
 		"bootstrap.servers": k.Config.Brokers,
 		"group.id":          "socialNetworkGroup",
@@ -76,7 +76,7 @@ func (k *KafkaConnection) ConnectConsumer() error {
 	return nil
 }
 
-func (k *KafkaConnection) Close() {
+func (k *Connection) Close() {
 	if k.Producer != nil {
 		k.Producer.Flush(15 * 1000)
 		k.Producer.Close()
@@ -90,7 +90,7 @@ func (k *KafkaConnection) Close() {
 	}
 }
 
-func (k *KafkaConnection) handleDeliveryReports() {
+func (k *Connection) handleDeliveryReports() {
 	for e := range k.Producer.Events() {
 		switch ev := e.(type) {
 		case *kafka.Message:

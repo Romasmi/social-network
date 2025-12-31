@@ -19,7 +19,7 @@ type ImportHandler struct {
 }
 
 type App interface {
-	GetDB() *database.DbConnection
+	GetDB() *database.Connection
 }
 
 func RegisterCommands(cmd *cobra.Command, app App) {
