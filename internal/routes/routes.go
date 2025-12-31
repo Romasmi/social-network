@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Romasmi/social-network/internal/events"
+	"github.com/Romasmi/social-network/internal/events/publisher"
 	"github.com/Romasmi/social-network/internal/infra/database"
 	"github.com/Romasmi/social-network/internal/infra/redis"
 	"github.com/Romasmi/social-network/internal/middleware"
@@ -15,7 +15,7 @@ import (
 type App interface {
 	GetDB() *database.Connection
 	GetRedis() *redis.Connection
-	GetPublisher() events.Publisher
+	GetPublisher() publisher.Publisher
 }
 
 type NotFoundResponse struct {

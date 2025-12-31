@@ -1,4 +1,4 @@
-package worker
+package main
 
 import (
 	"context"
@@ -22,12 +22,10 @@ func main() {
 		fmt.Printf("error while app init: %v", err)
 		os.Exit(1)
 	}
-	worker := app.NewApi(appInstance)
+	worker := app.NewWorker(appInstance)
 
 	go func() {
-		if err := worker.Run(); err != nil {
-			fmt.Printf("server error: %v\n", err)
-		}
+		worker.Run()
 	}()
 
 	quit := make(chan os.Signal, 1)
