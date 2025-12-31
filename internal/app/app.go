@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Romasmi/social-network/internal/config"
-	"github.com/Romasmi/social-network/internal/events"
+	"github.com/Romasmi/social-network/internal/events/publisher"
 	"github.com/Romasmi/social-network/internal/infra/database"
 	"github.com/Romasmi/social-network/internal/infra/kafka"
 	"github.com/Romasmi/social-network/internal/infra/redis"
@@ -18,7 +18,7 @@ type App struct {
 	RedisConn       *redis.Connection
 	KafkaConnection *kafka.Connection
 	Config          *config.Config
-	Publisher       events.Publisher
+	Publisher       publisher.Publisher
 	server          *http.Server
 }
 
@@ -30,7 +30,7 @@ func (a *App) GetRedis() *redis.Connection {
 	return a.RedisConn
 }
 
-func (a *App) GetPublisher() events.Publisher {
+func (a *App) GetPublisher() publisher.Publisher {
 	return a.Publisher
 }
 
@@ -62,7 +62,7 @@ func (a *App) init(configPath string) error {
 	}
 	a.KafkaConnection = kafkaConn
 
-	a.Publisher = events.NewPublisher(a.KafkaConnection, events.PublisherConfig{})
+	a.Publisher = publisher.NewPublisher(a.KafkaConnection, publisher.PublisherConfig{})
 
 	return nil
 }

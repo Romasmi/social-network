@@ -1,4 +1,4 @@
-package events
+package consumer
 
 import (
 	"context"
@@ -8,11 +8,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Romasmi/social-network/internal/events"
+	"github.com/Romasmi/social-network/internal/events/events_registry"
 	"github.com/Romasmi/social-network/internal/infra/kafka"
 	kafkago "github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
-type ConsumerConfig struct {
+type Config struct {
 	Topics            []string
 	PollTimeout       time.Duration
 	MaxRetries        int
@@ -31,13 +33,13 @@ type Consumer interface {
 
 type ConsumerImpl struct {
 	kafka    *kafka.Connection
-	registry EventRegistry
-	config   ConsumerConfig
+	registry events_registry.EventRegistry
+	config   Config
 	mu       sync.RWMutex
 	running  bool
 }
 
-func NewConsumer(kafkaConn *kafka.Connection, registry EventRegistry, config ConsumerConfig) Consumer {
+func NewConsumer(kafkaConn *kafka.Connection, registry events_registry.EventRegistry, config Config) Consumer {
 	if config.PollTimeout == 0 {
 		config.PollTimeout = 5 * time.Second
 	}
@@ -132,7 +134,7 @@ func (c *ConsumerImpl) processMessage(ctx context.Context, msg *kafkago.Message)
 	processCtx, cancel := context.WithTimeout(ctx, c.config.ProcessingTimeout)
 	defer cancel()
 
-	event, err := FromJSON(msg.Value)
+	event, err := events.FromJSON(msg.Value)
 	if err != nil {
 		return fmt.Errorf("failed to deserialize event: %w", err)
 	}
@@ -149,7 +151,7 @@ func (c *ConsumerImpl) processMessage(ctx context.Context, msg *kafkago.Message)
 			return fmt.Errorf("context cancelled before handler %d: %w", idx, err)
 		}
 
-		if err := handler(event); err != nil {
+		if err := handler(ctx, event); err != nil {
 			handlerErrors = append(handlerErrors, err)
 			log.Printf("Handler %d error for event %s (type=%s): %v",
 				idx, event.ID, event.Type, err)

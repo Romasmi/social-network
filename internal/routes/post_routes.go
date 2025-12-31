@@ -3,7 +3,7 @@ package routes
 import (
 	"net/http"
 
-	"github.com/Romasmi/social-network/internal/events"
+	"github.com/Romasmi/social-network/internal/events/publisher"
 	"github.com/Romasmi/social-network/internal/handlers/http/post_handler"
 	"github.com/Romasmi/social-network/internal/middleware"
 	"github.com/Romasmi/social-network/internal/repository"
@@ -14,7 +14,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func RegisterPostRoutes(r *mux.Router, db *pgxpool.Pool, rds *redis.Client, publisher events.Publisher) {
+func RegisterPostRoutes(r *mux.Router, db *pgxpool.Pool, rds *redis.Client, publisher publisher.Publisher) {
 	postsRepo := posts_repository.CreateCachedPostsRepository(
 		posts_repository.CreatePostsRepository(db),
 		rds,
