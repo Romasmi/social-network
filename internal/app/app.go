@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/Romasmi/social-network/internal/config"
+	"github.com/Romasmi/social-network/internal/events"
 	"github.com/Romasmi/social-network/internal/infra/database"
 	"github.com/Romasmi/social-network/internal/infra/kafka"
 	"github.com/Romasmi/social-network/internal/infra/redis"
@@ -16,6 +18,7 @@ type App struct {
 	RedisConn       *redis.Connection
 	KafkaConnection *kafka.Connection
 	Config          *config.Config
+	Publisher       events.Publisher
 	server          *http.Server
 }
 
@@ -25,6 +28,10 @@ func (a *App) GetDB() *database.Connection {
 
 func (a *App) GetRedis() *redis.Connection {
 	return a.RedisConn
+}
+
+func (a *App) GetPublisher() events.Publisher {
+	return a.Publisher
 }
 
 func NewApp(configPath string) (*App, error) {
@@ -55,6 +62,8 @@ func (a *App) init(configPath string) error {
 	}
 	a.KafkaConnection = kafkaConn
 
+	a.Publisher = events.NewPublisher(a.KafkaConnection, events.PublisherConfig{})
+
 	return nil
 }
 
@@ -77,6 +86,10 @@ func (a *App) Shutdown(ctx context.Context) error {
 		default:
 			a.DbConn.DB.Close()
 		}
+	}
+
+	if a.Publisher.Flush(time.Minute*3) != nil {
+		shutdownErr = fmt.Errorf("error flushing events: %w", a.Publisher.Flush(time.Minute*3))
 	}
 
 	a.KafkaConnection.Close()

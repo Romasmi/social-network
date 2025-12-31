@@ -8,8 +8,10 @@ import (
 	"github.com/google/uuid"
 )
 
-type EventType string
-type EventData map[string]any
+type (
+	EventType     string
+	EventMetadata map[string]string
+)
 
 const (
 	PostCreated   EventType = "post.created"
@@ -18,16 +20,16 @@ const (
 )
 
 type Event struct {
-	ID        string            `json:"id"`
-	Type      EventType         `json:"type"`
-	Timestamp time.Time         `json:"timestamp"`
-	Source    string            `json:"source"`
-	Version   string            `json:"version"`
-	Data      EventData         `json:"data"`
-	Metadata  map[string]string `json:"metadata"`
+	ID        string        `json:"id"`
+	Type      EventType     `json:"type"`
+	Timestamp time.Time     `json:"timestamp"`
+	Source    string        `json:"source"`
+	Version   string        `json:"version"`
+	Data      any           `json:"data"`
+	Metadata  EventMetadata `json:"metadata"`
 }
 
-func NewEvent(eventType EventType, data EventData) *Event {
+func NewEvent(eventType EventType, data any) *Event {
 	id, err := uuid.NewV7()
 	if err != nil {
 		fmt.Println(err)
@@ -40,7 +42,7 @@ func NewEvent(eventType EventType, data EventData) *Event {
 		Source:    "social-network-api",
 		Version:   "1.0",
 		Data:      data,
-		Metadata:  make(map[string]string),
+		Metadata:  make(EventMetadata),
 	}
 }
 
