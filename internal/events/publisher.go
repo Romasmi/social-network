@@ -2,7 +2,6 @@ package events
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"time"
@@ -46,7 +45,7 @@ func (p *PublisherImpl) PublishToTopic(ctx context.Context, event *Event, topic 
 		return fmt.Errorf("context cancelled: %w", err)
 	}
 
-	eventData, err := json.Marshal(event)
+	eventData, err := event.ToJSON()
 	if err != nil {
 		return fmt.Errorf("failed to serialize event: %w", err)
 	}
