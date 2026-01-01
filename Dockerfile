@@ -34,5 +34,5 @@ COPY --from=builder /app/worker .
 COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/*.yaml ./
 
-EXPOSE 8000
+EXPOSE 8888
 CMD ["./api"]

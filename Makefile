@@ -1,14 +1,12 @@
 .PHONY: run docker-up
 
-run:
+api:
 	go run cmd/api/main.go
 
+worker:
+	go run cmd/worker/main.go
+
 docker-up:
-	cd deployment/local && docker compose up -d
+	docker compose up -d
 
-local: docker-up
-	@sleep 5
-	@$(MAKE) run
-
-local-full:
-	cd deployment/local_full && docker compose up -d
+run: docker-up
