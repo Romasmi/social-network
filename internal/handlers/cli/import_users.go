@@ -21,7 +21,7 @@ type ParsedUser struct {
 	City       string    `json:"city"`
 }
 
-func (h *ImportHandler) ImportUserByLink(context context.Context, link string) error {
+func (h *ImportHandler) ImportUserByLink(context context.Context, link string, maxCount int) error {
 	resp, err := http.Get(link)
 	if err != nil {
 		return err
@@ -61,7 +61,12 @@ func (h *ImportHandler) ImportUserByLink(context context.Context, link string) e
 	}
 
 	go func() {
+		var count int
 		for {
+			count++
+			if count > maxCount {
+				break
+			}
 			record, err := reader.Read()
 			if err == io.EOF {
 				break

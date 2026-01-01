@@ -12,6 +12,14 @@ Run
 ```shell
 make up
 ```
+
+Generate user and data
+This command registers a user, add 10 friends and creates post for each friend.
+```shell
+make dummy-data
+```
+
+
 Service URLs
 
 | service  | url                  |                          
@@ -51,7 +59,10 @@ migrate create -ext sql -dir migrations -seq create_roles_table
 ### Import users
 Go to root folder and run:
 ```shell
-go run cmd/cli/main.go import -l <link to file>
+go run cmd/cli/main.go import <link to file> <max count of users to import>
+```
+```shell
+go run cmd/cli/main.go import https://raw.githubusercontent.com/OtusTeam/highload/master/homework/people.v2.csv 1000
 ```
 
 ### Import posts
