@@ -151,6 +151,7 @@ func (c *ConsumerImpl) processMessage(ctx context.Context, msg *kafkago.Message)
 			return fmt.Errorf("context cancelled before handler %d: %w", idx, err)
 		}
 
+		log.Printf("Handling event %s (type=%s)", event.ID, event.Type)
 		if err := handler(ctx, event); err != nil {
 			handlerErrors = append(handlerErrors, err)
 			log.Printf("Handler %d error for event %s (type=%s): %v",

@@ -24,8 +24,10 @@ func main() {
 	}
 	worker := app.NewWorker(appInstance)
 
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 	go func() {
-		worker.Run()
+		worker.Run(ctx)
 	}()
 
 	quit := make(chan os.Signal, 1)
@@ -34,10 +36,9 @@ func main() {
 
 	fmt.Println("Shutting down gracefully...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-
-	if err := worker.Shutdown(ctx); err != nil {
+	if err := worker.Shutdown(shutdownCtx); err != nil {
 		fmt.Printf("Error during shutdown: %v\n", err)
 	}
 

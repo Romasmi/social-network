@@ -34,7 +34,6 @@ func (h *PostHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	profileId = uuid.MustParse("019ad582-42a7-7d0f-a287-67d3dc0040ae")
 	post, err := h.postService.UpdatePost(r.Context(), profileId, postId, payload.Text)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {

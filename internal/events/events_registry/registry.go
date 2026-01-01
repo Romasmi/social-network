@@ -3,11 +3,11 @@ package events_registry
 import (
 	"context"
 
-	"github.com/Romasmi/social-network/internal/app"
 	"github.com/Romasmi/social-network/internal/events"
 	eventhandler "github.com/Romasmi/social-network/internal/handlers/events"
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/Romasmi/social-network/internal/repository/posts_repository"
+	"github.com/redis/go-redis/v9"
 )
 
 type EventHandler func(ctx context.Context, event *events.Event) error
@@ -21,10 +21,12 @@ type EventRegistryImpl struct {
 	handlers map[events.EventType][]EventHandler
 }
 
-func NewEventRegistry() EventRegistry {
-	return &EventRegistryImpl{
+func NewEventRegistry(db repository.DBQuerier, redis *redis.Client) EventRegistry {
+	r := &EventRegistryImpl{
 		handlers: make(map[events.EventType][]EventHandler),
 	}
+	r.registerEventHandlers(db, redis)
+	return r
 }
 
 func (r *EventRegistryImpl) Register(eventType events.EventType, handler EventHandler) {
@@ -35,11 +37,11 @@ func (r *EventRegistryImpl) GetHandlers(eventType events.EventType) []EventHandl
 	return r.handlers[eventType]
 }
 
-func RegisterEventHandlers(registry EventRegistry, app app.App) {
+func (r *EventRegistryImpl) registerEventHandlers(db repository.DBQuerier, redis *redis.Client) {
 	postHandler := eventhandler.CreatePostEventsHandler(
-		repository.CreateProfileFriendsRepository(app.GetDB().DB),
-		posts_repository.NewPostsCache(app.GetRedis().Rdb),
+		repository.CreateProfileFriendsRepository(db),
+		posts_repository.NewPostsCache(redis),
 	)
-	registry.Register(events.PostCreated, postHandler.OnPostCreated)
-	registry.Register(events.PostDeleted, postHandler.OnPostDeleted)
+	r.Register(events.PostCreated, postHandler.OnPostCreated)
+	r.Register(events.PostDeleted, postHandler.OnPostDeleted)
 }

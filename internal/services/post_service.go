@@ -4,16 +4,18 @@ import (
 	"context"
 
 	"github.com/Romasmi/social-network/internal/domain/post"
+	"github.com/Romasmi/social-network/internal/events/publisher"
 	"github.com/Romasmi/social-network/internal/repository/posts_repository"
 	"github.com/google/uuid"
 )
 
 type PostService struct {
 	postsRepo posts_repository.PostsRepository
+	publisher publisher.Publisher
 }
 
-func CreatePostService(postsRepo posts_repository.PostsRepository) *PostService {
-	return &PostService{postsRepo: postsRepo}
+func CreatePostService(postsRepo posts_repository.PostsRepository, publisher publisher.Publisher) *PostService {
+	return &PostService{postsRepo: postsRepo, publisher: publisher}
 }
 
 func (s *PostService) CreatePost(ctx context.Context, profileID uuid.UUID, text string) (*post.Post, error) {
@@ -21,12 +23,16 @@ func (s *PostService) CreatePost(ctx context.Context, profileID uuid.UUID, text 
 	if err != nil {
 		return nil, err
 	}
-	post := &post.Post{
+	created, err := s.postsRepo.CreatePost(ctx, &post.Post{
 		ID:        postID,
 		ProfileId: profileID,
 		Text:      text,
+	})
+	if err != nil {
+		return nil, err
 	}
-	return s.postsRepo.CreatePost(ctx, post)
+	_ = s.publisher.Publish(ctx, post.NewPostCreatedEvent(&post.CreatedEventData{Post: created}))
+	return created, nil
 }
 
 func (s *PostService) UpdatePost(ctx context.Context, profileID uuid.UUID, postID uuid.UUID, text string) (*post.Post, error) {
@@ -34,7 +40,15 @@ func (s *PostService) UpdatePost(ctx context.Context, profileID uuid.UUID, postI
 }
 
 func (s *PostService) DeletePost(ctx context.Context, profileID uuid.UUID, postID uuid.UUID) error {
-	return s.postsRepo.DeletePost(ctx, postID, profileID)
+	err := s.postsRepo.DeletePost(ctx, postID, profileID)
+	if err != nil {
+		return err
+	}
+	_ = s.publisher.Publish(ctx, post.NewPostDeletedEvent(&post.DeletedEventData{
+		PostID:    postID,
+		ProfileID: profileID,
+	}))
+	return nil
 }
 
 func (s *PostService) GetPost(ctx context.Context, postID uuid.UUID) (*post.Post, error) {

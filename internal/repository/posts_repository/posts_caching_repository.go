@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/Romasmi/social-network/internal/domain/post"
-	"github.com/Romasmi/social-network/internal/events/publisher"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
@@ -18,15 +17,14 @@ type missedCache []struct {
 type PostsCachingRepository struct {
 	postsRepo  PostsRepository
 	postsCache *PostsCache
-	publisher  publisher.Publisher
 }
 
 func (c *PostsCachingRepository) GetPostsByIds(ctx context.Context, postIDs []uuid.UUID) ([]*post.Post, error) {
 	return c.postsRepo.GetPostsByIds(ctx, postIDs)
 }
 
-func CreateCachedPostsRepository(postsRepo PostsRepository, rds *redis.Client, publisher publisher.Publisher) PostsRepository {
-	return &PostsCachingRepository{postsRepo: postsRepo, postsCache: NewPostsCache(rds), publisher: publisher}
+func CreateCachedPostsRepository(postsRepo PostsRepository, rds *redis.Client) PostsRepository {
+	return &PostsCachingRepository{postsRepo: postsRepo, postsCache: NewPostsCache(rds)}
 }
 
 func (c *PostsCachingRepository) CreatePost(ctx context.Context, p *post.Post) (*post.Post, error) {
@@ -34,9 +32,6 @@ func (c *PostsCachingRepository) CreatePost(ctx context.Context, p *post.Post) (
 	if err != nil {
 		return nil, err
 	}
-	_ = c.publisher.Publish(ctx, post.NewPostCreatedEvent(&post.CreatedEventData{Post: p}))
-	// TODO push p to friends feeds
-
 	return created, err
 }
 
@@ -57,12 +52,6 @@ func (c *PostsCachingRepository) UpdatePost(ctx context.Context, postID uuid.UUI
 
 func (c *PostsCachingRepository) DeletePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID) error {
 	c.postsCache.deletePost(ctx, postID)
-	_ = c.publisher.Publish(ctx, post.NewPostDeletedEvent(&post.DeletedEventData{
-		PostID:    postID,
-		ProfileID: profileID,
-	}))
-	// TODO remove from friends feeds
-
 	return c.postsRepo.DeletePost(ctx, postID, profileID)
 }
 

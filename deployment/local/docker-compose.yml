@@ -59,6 +59,28 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: "social-network-redis-insight"
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - social-network
+    env_file:
+      - ./.env
+    environment:
+      - RI_REDIS_HOST=redis
+      - RI_REDIS_PORT=6379
+      - RI_REDIS_ALIAS=Local Redis
+      - RI_REDIS_USER=${REDIS_USER}
+      - RI_REDIS_PASSWORD=${REDIS_USER_PASSWORD}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.redis-insight.rule=Host(`redis-insight.localhost`)"
+      - "traefik.http.routers.redis-insight.entrypoints=web"
+      - "traefik.http.services.redis-insight.loadbalancer.server.port=5540"
   kafka:
     image: confluentinc/cp-kafka:7.5.0
     hostname: kafka

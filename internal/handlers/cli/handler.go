@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/Romasmi/social-network/internal/events/publisher"
 	"github.com/Romasmi/social-network/internal/infra/database"
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/Romasmi/social-network/internal/repository/posts_repository"
@@ -20,6 +21,7 @@ type ImportHandler struct {
 
 type App interface {
 	GetDB() *database.Connection
+	GetPublisher() publisher.Publisher
 }
 
 func RegisterCommands(cmd *cobra.Command, app App) {
@@ -65,7 +67,7 @@ func RegisterCommands(cmd *cobra.Command, app App) {
 
 func CreateImportHandler(app App) *ImportHandler {
 	postRepo := posts_repository.CreatePostsRepository(app.GetDB().DB)
-	postService := services.CreatePostService(postRepo)
+	postService := services.CreatePostService(postRepo, app.GetPublisher())
 
 	cityRepo := repository.CreateCityRepository(app.GetDB().DB)
 	profileRepo := repository.CreateProfileRepository(app.GetDB().DB)
