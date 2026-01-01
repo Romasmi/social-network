@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Romasmi/social-network/internal/events"
-	"github.com/Romasmi/social-network/internal/infra/kafka"
+	"github.com/Romasmi/social-network/internal/infra/kafka_client"
 	kafkago "github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
@@ -18,7 +18,7 @@ type Publisher interface {
 }
 
 type PublisherImpl struct {
-	kafka        *kafka.Connection
+	kafka        *kafka_client.Connection
 	defaultTopic string
 }
 
@@ -26,7 +26,7 @@ type PublisherConfig struct {
 	DefaultTopic string
 }
 
-func NewPublisher(kafkaConn *kafka.Connection, config PublisherConfig) Publisher {
+func NewPublisher(kafkaConn *kafka_client.Connection, config PublisherConfig) Publisher {
 	if config.DefaultTopic == "" {
 		config.DefaultTopic = "social-network-events"
 	}

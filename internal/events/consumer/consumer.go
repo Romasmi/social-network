@@ -10,8 +10,8 @@ import (
 
 	"github.com/Romasmi/social-network/internal/events"
 	"github.com/Romasmi/social-network/internal/events/events_registry"
-	"github.com/Romasmi/social-network/internal/infra/kafka"
-	kafkago "github.com/confluentinc/confluent-kafka-go/kafka"
+	"github.com/Romasmi/social-network/internal/infra/kafka_client"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
 type Config struct {
@@ -25,21 +25,21 @@ type Config struct {
 type Consumer interface {
 	Start(ctx context.Context) error
 	Stop() error
-	Pause(partitions []kafkago.TopicPartition) error
-	Resume(partitions []kafkago.TopicPartition) error
-	Seek(partition kafkago.TopicPartition, timeoutMs int) error
-	CommitOffsets(offsets []kafkago.TopicPartition) error
+	Pause(partitions []kafka.TopicPartition) error
+	Resume(partitions []kafka.TopicPartition) error
+	Seek(partition kafka.TopicPartition, timeoutMs int) error
+	CommitOffsets(offsets []kafka.TopicPartition) error
 }
 
 type ConsumerImpl struct {
-	kafka    *kafka.Connection
+	kafka    *kafka_client.Connection
 	registry events_registry.EventRegistry
 	config   Config
 	mu       sync.RWMutex
 	running  bool
 }
 
-func NewConsumer(kafkaConn *kafka.Connection, registry events_registry.EventRegistry, config Config) Consumer {
+func NewConsumer(kafkaConn *kafka_client.Connection, registry events_registry.EventRegistry, config Config) Consumer {
 	if config.PollTimeout == 0 {
 		config.PollTimeout = 5 * time.Second
 	}
@@ -85,9 +85,9 @@ func (c *ConsumerImpl) consumeLoop(ctx context.Context) {
 		default:
 			msg, err := c.kafka.Consumer.ReadMessage(c.config.PollTimeout)
 			if err != nil {
-				var kafkaErr kafkago.Error
+				var kafkaErr kafka.Error
 				if errors.As(err, &kafkaErr) {
-					if kafkaErr.Code() == kafkago.ErrTimedOut {
+					if kafkaErr.Code() == kafka.ErrTimedOut {
 						continue
 					}
 				}
@@ -108,7 +108,7 @@ func (c *ConsumerImpl) consumeLoop(ctx context.Context) {
 	}
 }
 
-func (c *ConsumerImpl) processMessageWithRetry(ctx context.Context, msg *kafkago.Message) error {
+func (c *ConsumerImpl) processMessageWithRetry(ctx context.Context, msg *kafka.Message) error {
 	var lastErr error
 
 	for attempt := 0; attempt <= c.config.MaxRetries; attempt++ {
@@ -130,7 +130,7 @@ func (c *ConsumerImpl) processMessageWithRetry(ctx context.Context, msg *kafkago
 	return fmt.Errorf("failed after %d retries: %w", c.config.MaxRetries, lastErr)
 }
 
-func (c *ConsumerImpl) processMessage(ctx context.Context, msg *kafkago.Message) error {
+func (c *ConsumerImpl) processMessage(ctx context.Context, msg *kafka.Message) error {
 	processCtx, cancel := context.WithTimeout(ctx, c.config.ProcessingTimeout)
 	defer cancel()
 
@@ -180,19 +180,19 @@ func (c *ConsumerImpl) Stop() error {
 	return nil
 }
 
-func (c *ConsumerImpl) Pause(partitions []kafkago.TopicPartition) error {
+func (c *ConsumerImpl) Pause(partitions []kafka.TopicPartition) error {
 	return c.kafka.Consumer.Pause(partitions)
 }
 
-func (c *ConsumerImpl) Resume(partitions []kafkago.TopicPartition) error {
+func (c *ConsumerImpl) Resume(partitions []kafka.TopicPartition) error {
 	return c.kafka.Consumer.Resume(partitions)
 }
 
-func (c *ConsumerImpl) Seek(partition kafkago.TopicPartition, timeoutMs int) error {
+func (c *ConsumerImpl) Seek(partition kafka.TopicPartition, timeoutMs int) error {
 	return c.kafka.Consumer.Seek(partition, timeoutMs)
 }
 
-func (c *ConsumerImpl) CommitOffsets(offsets []kafkago.TopicPartition) error {
+func (c *ConsumerImpl) CommitOffsets(offsets []kafka.TopicPartition) error {
 	_, err := c.kafka.Consumer.CommitOffsets(offsets)
 	return err
 }

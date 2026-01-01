@@ -6,7 +6,7 @@ import (
 
 	"github.com/Romasmi/social-network/internal/events/consumer"
 	"github.com/Romasmi/social-network/internal/events/events_registry"
-	"github.com/Romasmi/social-network/internal/infra/kafka"
+	"github.com/Romasmi/social-network/internal/infra/kafka_client"
 )
 
 type Worker struct {
@@ -20,7 +20,7 @@ func NewWorker(app *App) *Worker {
 	return w
 }
 
-func (w *Worker) Init(kafkaConn *kafka.Connection) {
+func (w *Worker) Init(kafkaConn *kafka_client.Connection) {
 	w.consumer = consumer.NewConsumer(
 		kafkaConn,
 		events_registry.NewEventRegistry(w.app.GetDB().DB, w.app.GetRedis().Rdb),
