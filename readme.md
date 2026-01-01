@@ -105,12 +105,12 @@ It caches latest 1000 posts.
 | postCreated | push post id to fiends feeds                        |                                   |
 | postUpdated | update post data in cache posts:{postId} {postData} |                                   |
 | postDeleted | delete post from user friends feeds                 |
-| friendAdded | push latest 20 posts to feeds                       | user has posts,  friend has posts |
+| friendAdded | push users posts to feeds                           | user has posts,  friend has posts |
 | friendDeleted | remove posts from feed of user and friend           | user has posts,  friend has posts                  |
 
 #### Caching strategy
 I use `fan-out on write` approach.
-For the sake of simplicity, some steps are omitted.
+For the sake of simplicity, some steps are omitted below.
 ##### Get feed
 ````mermaid
 sequenceDiagram
@@ -153,14 +153,13 @@ sequenceDiagram
 ````
 
 ##### Invalidate cache on friendDeleted
-Recreate cache for {userId} if friend has posts.
-Recreate cache for {friendId} if user has posts.
+
 ````mermaid
 sequenceDiagram
     Client->>API: DELETE /friend/add/{friendId}
     API->>DB: Delete friend from user friends
-    API->>Redis: DEL feed:{userId} 
-    API->>API: Create feed to {userId}
-    API->>Redis: DEL feed:{friendId}
-    API->>API: Create feed to {friendId}
+    API->>DB: Get user's posts
+    API->>Redis: Delete user posts from ex-friend feed 
+    API->>DB: Get ex-friend's posts
+    API->>Redis: Delete ex-friend posts from ex-friend feed
 ````
