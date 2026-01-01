@@ -65,7 +65,7 @@ func (r *ProfileFriendsRepository) GetFriendsIds(ctx context.Context, profileID 
 			FROM %s
 			WHERE profile2_id = $1
 	`
-	sql := fmt.Sprintf(query, ProfileFriendsTable)
+	sql := fmt.Sprintf(query, ProfileFriendsTable, ProfileFriendsTable)
 	rows, err := r.db.Query(ctx, sql, profileID)
 	if rows != nil {
 		defer rows.Close()

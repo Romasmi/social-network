@@ -97,6 +97,6 @@ func (p *PublisherImpl) Flush(timeout time.Duration) error {
 	if remaining > 0 {
 		return fmt.Errorf("failed to flush %d messages within timeout", remaining)
 	}
-	log.Println("PublisherImpl flushed successfully")
+	log.Println("Publisher flushed successfully")
 	return nil
 }

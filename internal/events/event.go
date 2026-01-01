@@ -58,3 +58,17 @@ func FromJSON(data []byte) (*Event, error) {
 	}
 	return &event, nil
 }
+
+func CastDataTo[T any](e *Event) (*T, error) {
+	dataBytes, err := json.Marshal(e.Data)
+	if err != nil {
+		return nil, err
+	}
+
+	var data T
+	err = json.Unmarshal(dataBytes, &data)
+	if err != nil {
+		return nil, err
+	}
+	return &data, nil
+}
