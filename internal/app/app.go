@@ -9,14 +9,14 @@ import (
 	"github.com/Romasmi/social-network/internal/config"
 	"github.com/Romasmi/social-network/internal/events/publisher"
 	"github.com/Romasmi/social-network/internal/infra/database"
-	"github.com/Romasmi/social-network/internal/infra/kafka"
-	"github.com/Romasmi/social-network/internal/infra/redis"
+	"github.com/Romasmi/social-network/internal/infra/kafka_client"
+	"github.com/Romasmi/social-network/internal/infra/redis_client"
 )
 
 type App struct {
 	DbConn          *database.Connection
-	RedisConn       *redis.Connection
-	KafkaConnection *kafka.Connection
+	RedisConn       *redis_client.Connection
+	KafkaConnection *kafka_client.Connection
 	Config          *config.Config
 	Publisher       publisher.Publisher
 	server          *http.Server
@@ -26,7 +26,7 @@ func (a *App) GetDB() *database.Connection {
 	return a.DbConn
 }
 
-func (a *App) GetRedis() *redis.Connection {
+func (a *App) GetRedis() *redis_client.Connection {
 	return a.RedisConn
 }
 
@@ -52,11 +52,11 @@ func (a *App) init(configPath string) error {
 	}
 	a.DbConn = dbConn
 
-	redisConn := &redis.Connection{Config: &envConfig.Redis}
+	redisConn := &redis_client.Connection{Config: &envConfig.Redis}
 	redisConn.Connect()
 	a.RedisConn = redisConn
 
-	kafkaConn, err := kafka.CreateKafkaConnection(&a.Config.Kafka)
+	kafkaConn, err := kafka_client.CreateKafkaConnection(&a.Config.Kafka)
 	if err != nil {
 		return fmt.Errorf("error connecting to Kafka: %v\n", err)
 	}

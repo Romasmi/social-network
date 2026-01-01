@@ -6,21 +6,36 @@ FYI: check researches in docs folder, it's interesting!
 Create social network which allows to create and view user cards
 
 ## How to start
-Ensure port 8000 is available and you have docker installed.
-After start Api will be available at http://localhost:8000
+It provides a fully prepared docker env including api for demo and workers.
 
-### if you have goland 1.25.1^ locally
-
+Run 
 ```shell
-make local && go run cmd/api/main.go
+make up
 ```
 
-### If you don't have go 1.25.1^ locally
+Generate user and data
+This command registers a user, add 10 friends and creates post for each friend.
 ```shell
-make local-fullы
+make dummy-data
+```
+it returns registered user data like:
+```json
+{
+  "id": "019b7b4e-ef4e-7a12-8d6d-da73e00c701d",
+  "password": "password"
+}
 ```
 
-## Requirements
+Service URLs
+
+| service  | url                  |                          
+|----------|----------------------|
+| API      | http://api.localhost |
+| Redis UI | http://redis-insight.localhost |
+| Kafka UI | http://kafka-ui.localhost |
+| Traefik  | http://localhost:8080 |
+
+## Initial requirements
 ### Functional
 - basic/bearer authorization
 - create user data: name, surname, birthdate, gender, interests, city.
@@ -28,7 +43,7 @@ make local-fullы
 ### Non-functional
 - monolithic architecture 
 
-## Endpoints
+### Endpoints
 Specification : https://github.com/OtusTeam/highload/blob/master/homework/openapi.json
 - /login  (Returns bearer token)
 - /user/register
@@ -36,18 +51,24 @@ Specification : https://github.com/OtusTeam/highload/blob/master/homework/openap
 
 
 ## Development
+### Run API
+```shell
+make api
+```
 
 ### Migrations
 #### Create migration
 ``` bash
-migrate create -ext sql -dir migrations -seq create_roles_stable
+migrate create -ext sql -dir migrations -seq create_roles_table
 ```
 
 ### Import users
 Go to root folder and run:
 ```shell
-go run cmd/cli/main.go import -l <link to file>
-
+go run cmd/cli/main.go import <link to file> <max count of users to import>
+```
+```shell
+go run cmd/cli/main.go import https://raw.githubusercontent.com/OtusTeam/highload/master/homework/people.v2.csv 1000
 ```
 
 ### Import posts
@@ -60,14 +81,17 @@ Example:
 go run ./cmd/cli importPosts https://raw.githubusercontent.com/OtusTeam/highload/refs/heads/master/homework/posts.txt 019ad582-424c-7316-b98c-eee5bf0f8d08 019ad582-42a7-7d0f-a287-67d3dc0040ae 019ad582-42b3-7340-a5b8-6025ce042c01 019ad582-426a-756e-ad6e-7341623185c4 019ad582-4292-78be-889c-027d95fcc30
 ````
 
-
 File structure:
 Name | birdate | Profile
 
 ### Load testing via K6
-
+#### Search user
 ```shell
  k6 run --vus 1000 --duration 30s -e TOKEN=<token> load_testing/user_search.js
+```
+#### Feed cache
+```shell
+k6 run --vus 1000 --duration 30s -e TOKEN="019b6a77-8c9f-7cf8-9a48-f8bd6a714be8" load_testing/get_feed.js
 ```
 
 ## Caching
@@ -81,12 +105,12 @@ It caches latest 1000 posts.
 | postCreated | push post id to fiends feeds                        |                                   |
 | postUpdated | update post data in cache posts:{postId} {postData} |                                   |
 | postDeleted | delete post from user friends feeds                 |
-| friendAdded | push latest 20 posts to feeds                       | user has posts,  friend has posts |
+| friendAdded | push users posts to feeds                           | user has posts,  friend has posts |
 | friendDeleted | remove posts from feed of user and friend           | user has posts,  friend has posts                  |
 
 #### Caching strategy
 I use `fan-out on write` approach.
-For the sake of simplicity, some steps are omitted.
+For the sake of simplicity, some steps are omitted below.
 ##### Get feed
 ````mermaid
 sequenceDiagram
@@ -129,29 +153,13 @@ sequenceDiagram
 ````
 
 ##### Invalidate cache on friendDeleted
-Recreate cache for {userId} if friend has posts.
-Recreate cache for {friendId} if user has posts.
+
 ````mermaid
 sequenceDiagram
     Client->>API: DELETE /friend/add/{friendId}
     API->>DB: Delete friend from user friends
-    API->>Redis: DEL feed:{userId} 
-    API->>API: Create feed to {userId}
-    API->>Redis: DEL feed:{friendId}
-    API->>API: Create feed to {friendId}
+    API->>DB: Get user's posts
+    API->>Redis: Delete user posts from ex-friend feed 
+    API->>DB: Get ex-friend's posts
+    API->>Redis: Delete ex-friend posts from ex-friend feed
 ````
-
-#### Load testing
-```shell
-k6 run --vus 1000 --duration 30s -e TOKEN="019b6a77-8c9f-7cf8-9a48-f8bd6a714be8" load_testing/get_feed.js
-```
-
-## Debug
-### Redis
-Use Redis Insight
-`http://redis-insight.localhost/`
-
-### Kafka
-
-Use Kafka UI
-`http://kafka-ui.localhost/`
