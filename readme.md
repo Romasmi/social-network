@@ -145,3 +145,13 @@ sequenceDiagram
 ```shell
 k6 run --vus 1000 --duration 30s -e TOKEN="019b6a77-8c9f-7cf8-9a48-f8bd6a714be8" load_testing/get_feed.js
 ```
+
+## Debug
+### Redis
+Use Redis Insight
+`http://redis-insight.localhost/`
+
+### Kafka
+
+Use Kafka UI
+`http://kafka-ui.localhost/`
