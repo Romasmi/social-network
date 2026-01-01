@@ -38,10 +38,15 @@ func (r *EventRegistryImpl) GetHandlers(eventType events.EventType) []EventHandl
 }
 
 func (r *EventRegistryImpl) registerEventHandlers(db repository.DBQuerier, redis *redis.Client) {
-	postHandler := eventhandler.CreatePostEventsHandler(
-		repository.CreateProfileFriendsRepository(db),
-		posts_repository.NewPostsCache(redis),
-	)
+	profileFriendsRepo := repository.CreateProfileFriendsRepository(db)
+	postsCache := posts_repository.NewPostsCache(redis)
+	postsRepository := posts_repository.CreateCachedPostsRepository(posts_repository.CreatePostsRepository(db), redis)
+
+	postHandler := eventhandler.CreatePostEventsHandler(profileFriendsRepo, postsCache)
+	profileHandler := eventhandler.CreateProfileEventHandler(profileFriendsRepo, postsCache, postsRepository)
+
 	r.Register(events.PostCreated, postHandler.OnPostCreated)
 	r.Register(events.PostDeleted, postHandler.OnPostDeleted)
+
+	r.Register(events.FriendDeleted, profileHandler.OnFriendDeleted)
 }

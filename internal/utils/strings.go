@@ -18,3 +18,11 @@ func IdsToUUUIds(ids []string) []uuid.UUID {
 	}
 	return out
 }
+
+func UUIDsToStrings(ids []uuid.UUID) []string {
+	output := make([]string, len(ids))
+	for i, v := range ids {
+		output[i] = v.String()
+	}
+	return output
+}

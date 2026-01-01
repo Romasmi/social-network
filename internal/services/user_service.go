@@ -8,6 +8,7 @@ import (
 	"github.com/Romasmi/social-network/internal/domain/city"
 	"github.com/Romasmi/social-network/internal/domain/profile"
 	"github.com/Romasmi/social-network/internal/domain/user"
+	"github.com/Romasmi/social-network/internal/events/publisher"
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/brianvoe/gofakeit/v7"
 	"github.com/google/uuid"
@@ -19,14 +20,17 @@ type UserService struct {
 	profileRepo        *repository.ProfileRepository
 	profileFriendsRepo *repository.ProfileFriendsRepository
 	uow                repository.UnitOfWork
+	publisher          publisher.Publisher
 }
 
 func CreateUserService(
 	cityRepo *repository.CityRepository,
 	profileRepo *repository.ProfileRepository,
 	profileFriendRepo *repository.ProfileFriendsRepository,
-	uow repository.UnitOfWork) *UserService {
-	return &UserService{cityRepo: cityRepo, profileRepo: profileRepo, profileFriendsRepo: profileFriendRepo, uow: uow}
+	uow repository.UnitOfWork,
+	publisher publisher.Publisher,
+) *UserService {
+	return &UserService{cityRepo: cityRepo, profileRepo: profileRepo, profileFriendsRepo: profileFriendRepo, uow: uow, publisher: publisher}
 }
 
 func (s *UserService) RegisterUser(ctx context.Context, payload *profile.CreateProfileModel) (*profile.Profile, error) {
@@ -110,9 +114,20 @@ func (s *UserService) SearchUsers(ctx context.Context, queryParams *profile.User
 }
 
 func (s *UserService) SetFriend(ctx context.Context, profileId1, profileId2 uuid.UUID) error {
-	return s.profileFriendsRepo.SetFriend(ctx, profileId1, profileId2)
+	if err := s.profileFriendsRepo.SetFriend(ctx, profileId1, profileId2); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *UserService) DeleteFriend(ctx context.Context, profileId1, profileId2 uuid.UUID) error {
-	return s.profileFriendsRepo.DeleteFriend(ctx, profileId1, profileId2)
+	if s.profileFriendsRepo.DeleteFriend(ctx, profileId1, profileId2) != nil {
+		return s.profileFriendsRepo.DeleteFriend(ctx, profileId1, profileId2)
+	}
+	s.publisher.Publish(ctx, profile.NewFriendDeletedEvent(&profile.FriendDeletedEventData{
+		ProfileID: profileId1,
+		FriendID:  profileId2,
+	}))
+	return nil
 }

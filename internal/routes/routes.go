@@ -33,7 +33,7 @@ func RegisterRoutes(
 	router.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
 
 	RegisterAuthHandlers(router, app.GetDB().DB)
-	RegisterUserRoutes(router, app.GetDB().DB)
+	RegisterUserRoutes(router, app.GetDB().DB, app.GetPublisher())
 	RegisterPostRoutes(router, app.GetDB().DB, app.GetRedis().Rdb, app.GetPublisher())
 }
 

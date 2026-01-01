@@ -8,6 +8,7 @@ import (
 	"github.com/Romasmi/social-network/internal/events"
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/Romasmi/social-network/internal/repository/posts_repository"
+	"github.com/google/uuid"
 )
 
 type PostEventHandler struct {
@@ -43,5 +44,5 @@ func (h *PostEventHandler) OnPostDeleted(ctx context.Context, event *events.Even
 	if err != nil {
 		return fmt.Errorf("getting friends ids: %w", err)
 	}
-	return h.postsCache.DeleteFromFeeds(ctx, friendIds, data.PostID)
+	return h.postsCache.DeleteFromFeeds(ctx, friendIds, []uuid.UUID{data.PostID})
 }

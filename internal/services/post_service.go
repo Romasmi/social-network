@@ -40,9 +40,8 @@ func (s *PostService) UpdatePost(ctx context.Context, profileID uuid.UUID, postI
 }
 
 func (s *PostService) DeletePost(ctx context.Context, profileID uuid.UUID, postID uuid.UUID) error {
-	err := s.postsRepo.DeletePost(ctx, postID, profileID)
-	if err != nil {
-		return err
+	if s.postsRepo.DeletePost(ctx, postID, profileID) != nil {
+		return s.postsRepo.DeletePost(ctx, postID, profileID)
 	}
 	_ = s.publisher.Publish(ctx, post.NewPostDeletedEvent(&post.DeletedEventData{
 		PostID:    postID,
