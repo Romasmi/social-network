@@ -82,7 +82,7 @@ It caches latest 1000 posts.
 | postUpdated | update post data in cache posts:{postId} {postData} |                                   |
 | postDeleted | delete post from user friends feeds                 |
 | friendAdded | push latest 20 posts to feeds                       | user has posts,  friend has posts |
-| friendDeleted | recreate feed for user and friend                   | user has posts,  friend has posts                  |
+| friendDeleted | remove posts from feed of user and friend           | user has posts,  friend has posts                  |
 
 #### Caching strategy
 I use `fan-out on write` approach.

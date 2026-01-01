@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Romasmi/social-network/internal/domain/post"
+	"github.com/Romasmi/social-network/internal/utils"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
@@ -33,12 +34,23 @@ func (c *PostsCache) PushToFeeds(ctx context.Context, profileIDs []uuid.UUID, po
 	return nil
 }
 
-func (c *PostsCache) DeleteFromFeeds(ctx context.Context, profileIDs []uuid.UUID, postIDs uuid.UUID) error {
-	if len(profileIDs) == 0 {
+func (c *PostsCache) DeleteFromFeeds(ctx context.Context, profileIDs []uuid.UUID, postIDs []uuid.UUID) error {
+	if len(profileIDs) == 0 || len(postIDs) == 0 {
 		return nil
 	}
+	p := c.client.Pipeline()
 	for _, v := range profileIDs {
-		c.client.ZRem(ctx, getFeedKey(v), postIDs.String())
+		p.ZRem(ctx, getFeedKey(v), utils.UUIDsToStrings(postIDs))
+	}
+	cmds, err := p.Exec(ctx)
+	if err != nil {
+		return err
+	}
+	for _, cmd := range cmds {
+		if cmd.Err() != nil {
+			// Log error
+			fmt.Printf("Redis command error: %v\n", cmd.Err())
+		}
 	}
 	return nil
 }

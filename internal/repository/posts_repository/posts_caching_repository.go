@@ -19,6 +19,10 @@ type PostsCachingRepository struct {
 	postsCache *PostsCache
 }
 
+func (c *PostsCachingRepository) GetPostsByProfileId(ctx context.Context, profileID uuid.UUID) ([]*post.Post, error) {
+	return c.postsRepo.GetPostsByProfileId(ctx, profileID)
+}
+
 func (c *PostsCachingRepository) GetPostsByIds(ctx context.Context, postIDs []uuid.UUID) ([]*post.Post, error) {
 	return c.postsRepo.GetPostsByIds(ctx, postIDs)
 }

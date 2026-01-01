@@ -72,7 +72,7 @@ func CreateImportHandler(app App) *ImportHandler {
 	cityRepo := repository.CreateCityRepository(app.GetDB().DB)
 	profileRepo := repository.CreateProfileRepository(app.GetDB().DB)
 	uow := repository.CreateUnitOfWork(app.GetDB().DB)
-	userService := services.CreateUserService(cityRepo, profileRepo, nil, uow)
+	userService := services.CreateUserService(cityRepo, profileRepo, nil, uow, app.GetPublisher())
 
 	return &ImportHandler{
 		postService: postService,

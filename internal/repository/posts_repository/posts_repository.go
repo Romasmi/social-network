@@ -19,6 +19,7 @@ type PostsRepository interface {
 	DeletePost(ctx context.Context, postID uuid.UUID, profileID uuid.UUID) error
 	GetPost(ctx context.Context, postID uuid.UUID) (*post.Post, error)
 	GetPostsByIds(ctx context.Context, postID []uuid.UUID) ([]*post.Post, error)
+	GetPostsByProfileId(ctx context.Context, profileID uuid.UUID) ([]*post.Post, error)
 	GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*post.Post, error)
 }
 
@@ -124,6 +125,18 @@ func (r *postsRepositoryImpl) GetPost(ctx context.Context, postID uuid.UUID) (*p
 	return post, nil
 }
 
+func (r *postsRepositoryImpl) GetPostsByProfileId(ctx context.Context, profileID uuid.UUID) ([]*post.Post, error) {
+	const query = `
+        SELECT id, profile_id, text
+        FROM %s
+        WHERE profile_id = $1
+    `
+	sql := fmt.Sprintf(query, postsTable)
+
+	rows, err := r.db.Query(ctx, sql, profileID)
+	return r.rowsToPosts(rows, err)
+}
+
 func (r *postsRepositoryImpl) GetPostsByIds(ctx context.Context, postIDs []uuid.UUID) ([]*post.Post, error) {
 	const query = `
         SELECT id, profile_id, text
@@ -133,29 +146,7 @@ func (r *postsRepositoryImpl) GetPostsByIds(ctx context.Context, postIDs []uuid.
 	sql := fmt.Sprintf(query, postsTable)
 
 	rows, err := r.db.Query(ctx, sql, postIDs)
-	if rows != nil {
-		defer rows.Close()
-	}
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return []*post.Post{}, nil
-		}
-		return nil, err
-	}
-	posts := []*post.Post{}
-	for rows.Next() {
-		post := &post.Post{}
-		err := rows.Scan(
-			&post.ID,
-			&post.ProfileId,
-			&post.Text,
-		)
-		if err != nil {
-			return nil, err
-		}
-		posts = append(posts, post)
-	}
-	return posts, nil
+	return r.rowsToPosts(rows, err)
 }
 
 func (r *postsRepositoryImpl) GetFeed(ctx context.Context, profileID uuid.UUID, limit, offset int) ([]*post.Post, error) {
@@ -177,6 +168,10 @@ func (r *postsRepositoryImpl) GetFeed(ctx context.Context, profileID uuid.UUID, 
 	sql := fmt.Sprintf(query, postsTable, repository.ProfileFriendsTable, repository.ProfileFriendsTable)
 
 	rows, err := r.db.Query(ctx, sql, profileID, limit, offset)
+	return r.rowsToPosts(rows, err)
+}
+
+func (r *postsRepositoryImpl) rowsToPosts(rows pgx.Rows, err error) ([]*post.Post, error) {
 	if rows != nil {
 		defer rows.Close()
 	}
@@ -188,16 +183,16 @@ func (r *postsRepositoryImpl) GetFeed(ctx context.Context, profileID uuid.UUID, 
 	}
 	posts := []*post.Post{}
 	for rows.Next() {
-		post := &post.Post{}
+		p := &post.Post{}
 		err := rows.Scan(
-			&post.ID,
-			&post.ProfileId,
-			&post.Text,
+			&p.ID,
+			&p.ProfileId,
+			&p.Text,
 		)
 		if err != nil {
 			return nil, err
 		}
-		posts = append(posts, post)
+		posts = append(posts, p)
 	}
 	return posts, nil
 }
