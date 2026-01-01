@@ -18,11 +18,10 @@ func RegisterPostRoutes(r *mux.Router, db *pgxpool.Pool, rds *redis.Client, publ
 	postsRepo := posts_repository.CreateCachedPostsRepository(
 		posts_repository.CreatePostsRepository(db),
 		rds,
-		publisher,
 	)
 	sessionRepo := repository.CreateSessionRepository(db)
 
-	postService := services.CreatePostService(postsRepo)
+	postService := services.CreatePostService(postsRepo, publisher)
 	sessionService := services.CreateSessionService(sessionRepo)
 
 	postHandler := post_handler.CreatePostHandler(postService)
