@@ -18,7 +18,13 @@ This command registers a user, add 10 friends and creates post for each friend.
 ```shell
 make dummy-data
 ```
-
+it returns registered user data like:
+```json
+{
+  "id": "019b7b4e-ef4e-7a12-8d6d-da73e00c701d",
+  "password": "password"
+}
+```
 
 Service URLs
 

@@ -10,3 +10,20 @@ docker-up:
 	docker compose up -d
 
 run: docker-up
+
+import-users:
+	go run cmd/cli/main.go import https://raw.githubusercontent.com/OtusTeam/highload/master/homework/people.v2.csv 10
+
+dummy-data: import-users
+	@echo "Creating dummy user..."
+	@ID=$$(curl -s -X POST 'http://api.localhost/user/register' \
+		--header 'Content-Type: application/json' \
+		--data '{"first_name":"Имя","second_name":"Фамилия","birthdate":"2017-02-01","biography":"Хобби, интересы и т.п.","city":"Москва","password":"password"}' \
+		| grep -o '"id":"[^"]*"' | cut -d'"' -f4); \
+	echo ""; \
+	go run ./cmd/cli addRandomFriendsWithPosts $$ID 10; \
+	echo "{"; \
+	echo "  \"id\": \"$$ID\","; \
+	echo "  \"password\": \"password\""; \
+	echo "}"; \
+	echo "";

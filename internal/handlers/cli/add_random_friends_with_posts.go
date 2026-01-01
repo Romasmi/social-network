@@ -11,6 +11,8 @@ import (
 	"github.com/google/uuid"
 )
 
+const countOfPostsPerFriend = 10
+
 func (h *ImportHandler) AddRandomFriendsWithPosts(ctx context.Context, profileId uuid.UUID, numberOfFriends int) error {
 	if numberOfFriends == 0 {
 		return nil
@@ -41,8 +43,10 @@ func (h *ImportHandler) AddRandomFriendsWithPosts(ctx context.Context, profileId
 			errors = append(errors, fmt.Sprintf("set friend %s: %v", fid, err))
 			continue
 		}
-		if _, err := h.postService.CreatePost(ctx, fid, gofakeit.LoremIpsumSentence(100)); err != nil {
-			errors = append(errors, fmt.Sprintf("create post for %s: %v", fid, err))
+		for range countOfPostsPerFriend {
+			if _, err := h.postService.CreatePost(ctx, fid, gofakeit.LoremIpsumSentence(100)); err != nil {
+				errors = append(errors, fmt.Sprintf("create post for %s: %v", fid, err))
+			}
 		}
 	}
 

@@ -36,6 +36,11 @@ func (a *Cli) Run() {
 		fmt.Println(os.Stderr, "Error: %s\n", err)
 		os.Exit(1)
 	}
+	if err := a.Shutdown(context.Background()); err != nil {
+		fmt.Println(os.Stderr, "Shutdown error: %s\n", err)
+		os.Exit(1)
+	}
+	os.Exit(0)
 }
 
 func (a *Cli) Shutdown(ctx context.Context) error {
