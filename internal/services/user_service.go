@@ -117,17 +117,18 @@ func (s *UserService) SetFriend(ctx context.Context, profileId1, profileId2 uuid
 	if err := s.profileFriendsRepo.SetFriend(ctx, profileId1, profileId2); err != nil {
 		return err
 	}
-
-	return nil
+	return s.publisher.Publish(ctx, profile.NewFriendAddedEvent(&profile.FriendAddedEventData{
+		ProfileID: profileId1,
+		FriendID:  profileId2,
+	}))
 }
 
 func (s *UserService) DeleteFriend(ctx context.Context, profileId1, profileId2 uuid.UUID) error {
 	if s.profileFriendsRepo.DeleteFriend(ctx, profileId1, profileId2) != nil {
 		return s.profileFriendsRepo.DeleteFriend(ctx, profileId1, profileId2)
 	}
-	s.publisher.Publish(ctx, profile.NewFriendDeletedEvent(&profile.FriendDeletedEventData{
+	return s.publisher.Publish(ctx, profile.NewFriendDeletedEvent(&profile.FriendDeletedEventData{
 		ProfileID: profileId1,
 		FriendID:  profileId2,
 	}))
-	return nil
 }

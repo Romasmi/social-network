@@ -29,6 +29,18 @@ func CreateProfileEventHandler(
 	}
 }
 
+func (h *ProfileEventHandler) OnFriendAdded(ctx context.Context, event *events.Event) error {
+	data, err := events.CastDataTo[profile.FriendDeletedEventData](event)
+	if err != nil {
+		return fmt.Errorf("invalid event data: %v", event)
+	}
+	err = h.pushUserPostsFromOthersFeed(ctx, data.ProfileID, data.FriendID)
+	if err != nil {
+		return err
+	}
+	return h.pushUserPostsFromOthersFeed(ctx, data.FriendID, data.ProfileID)
+}
+
 func (h *ProfileEventHandler) OnFriendDeleted(ctx context.Context, event *events.Event) error {
 	data, err := events.CastDataTo[profile.FriendDeletedEventData](event)
 	if err != nil {
@@ -51,4 +63,12 @@ func (h *ProfileEventHandler) deleteUserPostsFromOthersFeed(ctx context.Context,
 		postIds[i] = v.ID
 	}
 	return h.postsCache.DeleteFromFeeds(ctx, []uuid.UUID{otherID}, postIds)
+}
+
+func (h *ProfileEventHandler) pushUserPostsFromOthersFeed(ctx context.Context, profileID, otherID uuid.UUID) error {
+	posts, err := h.postsRepo.GetPostsByProfileId(ctx, profileID)
+	if err != nil {
+		return fmt.Errorf("getting posts by profile id: %w", err)
+	}
+	return h.postsCache.PushToFeeds(ctx, []uuid.UUID{otherID}, posts)
 }

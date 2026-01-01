@@ -16,6 +16,7 @@ type (
 const (
 	PostCreated   EventType = "post.created"
 	PostDeleted   EventType = "post.deleted"
+	FriendAdded   EventType = "friend.added"
 	FriendDeleted EventType = "friend.deleted"
 )
 

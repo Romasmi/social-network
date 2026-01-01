@@ -48,5 +48,6 @@ func (r *EventRegistryImpl) registerEventHandlers(db repository.DBQuerier, redis
 	r.Register(events.PostCreated, postHandler.OnPostCreated)
 	r.Register(events.PostDeleted, postHandler.OnPostDeleted)
 
+	r.Register(events.FriendAdded, profileHandler.OnFriendAdded)
 	r.Register(events.FriendDeleted, profileHandler.OnFriendDeleted)
 }
