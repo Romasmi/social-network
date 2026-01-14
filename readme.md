@@ -167,6 +167,7 @@ sequenceDiagram
 ## Replication
 
 Load testings for replications:
+`User search -> think 0.5s -> get 5 randoms users with 0.5s pause`
 ```shell
 k6 run --vus 1 --duration 30s -e TOKEN=019bbe07-df1b-7ec5-bf00-c2c095c1beb2 load_testing/get_user_for_replication.js
 ```
