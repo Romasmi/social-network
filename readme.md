@@ -163,3 +163,10 @@ sequenceDiagram
     API->>DB: Get ex-friend's posts
     API->>Redis: Delete ex-friend posts from ex-friend feed
 ````
+
+## Replication
+
+Load testings for replications:
+```shell
+k6 run --vus 1 --duration 30s -e TOKEN=019bbe07-df1b-7ec5-bf00-c2c095c1beb2 load_testing/get_user_for_replication.js
+```
