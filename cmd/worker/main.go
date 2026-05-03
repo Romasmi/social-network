@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,6 +13,9 @@ import (
 )
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	basePath := os.Getenv("APP_BASE_PATH")
 	if basePath == "" {
 		basePath = "." // current directory

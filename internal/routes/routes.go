@@ -33,6 +33,7 @@ func RegisterRoutes(
 	}
 	router.Use(middleware.ResponseHeadersMiddleware)
 	router.Use(metrics.Middleware)
+	router.Use(middleware.LoggingMiddleware)
 	router.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
 
 	router.Handle("/metrics", promhttp.Handler()).Methods(http.MethodGet)

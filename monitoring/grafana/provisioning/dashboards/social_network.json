@@ -92,6 +92,46 @@
           "legendFormat": "Idle"
         }
       ]
+    },
+    {
+      "title": "Cache Hit Rate",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "targets": [
+        {
+          "expr": "rate(cache_hits_total[1m]) / (rate(cache_hits_total[1m]) + rate(cache_misses_total[1m]))",
+          "legendFormat": "{{cache_name}}"
+        }
+      ]
+    },
+    {
+      "title": "DB Acquisition Wait",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 16
+      },
+      "targets": [
+        {
+          "expr": "rate(db_pool_acquire_wait_duration_seconds_total[1m])",
+          "legendFormat": "Wait Duration"
+        }
+      ]
     }
   ],
   "schemaVersion": 39,

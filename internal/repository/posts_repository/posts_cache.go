@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Romasmi/social-network/internal/domain/post"
+	"github.com/Romasmi/social-network/internal/metrics"
 	"github.com/Romasmi/social-network/internal/utils"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -118,12 +119,14 @@ func (c *PostsCache) getCachedPosts(ctx context.Context, postIds []uuid.UUID) ([
 	posts := make([]*post.Post, len(postIds))
 	for i, v := range postsCache {
 		if v == nil {
+			metrics.CacheMissesTotal.WithLabelValues("posts").Inc()
 			mc = append(mc, struct {
 				i  int
 				id uuid.UUID
 			}{i, postIds[i]})
 			continue
 		}
+		metrics.CacheHitsTotal.WithLabelValues("posts").Inc()
 		data, ok := v.(string)
 		if !ok {
 			mc = append(mc, struct {
@@ -153,6 +156,11 @@ func (c *PostsCache) getPostIdsFromFeed(ctx context.Context, profileID uuid.UUID
 	postIds, err := c.client.ZRevRange(ctx, getFeedKey(profileID), int64(offset), int64(limit+offset-1)).Result()
 	if err != nil {
 		return nil, err
+	}
+	if len(postIds) > 0 {
+		metrics.CacheHitsTotal.WithLabelValues("feed").Inc()
+	} else {
+		metrics.CacheMissesTotal.WithLabelValues("feed").Inc()
 	}
 	output := make([]uuid.UUID, len(postIds))
 	for i, v := range postIds {

@@ -40,3 +40,17 @@ func JsonErrorNotFound(w http.ResponseWriter) {
 func JsonInternalServerError(w http.ResponseWriter) {
 	JsonError(w, http.StatusInternalServerError, fmt.Errorf("internal error"))
 }
+
+type StatusResponseWriter struct {
+	http.ResponseWriter
+	StatusCode int
+}
+
+func (rw *StatusResponseWriter) WriteHeader(code int) {
+	rw.StatusCode = code
+	rw.ResponseWriter.WriteHeader(code)
+}
+
+func NewStatusResponseWriter(w http.ResponseWriter) *StatusResponseWriter {
+	return &StatusResponseWriter{ResponseWriter: w, StatusCode: http.StatusOK}
+}

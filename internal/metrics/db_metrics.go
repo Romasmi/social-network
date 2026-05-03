@@ -14,6 +14,7 @@ type DatabaseCollector struct {
 	idleConns    *prometheus.Desc
 	activeConns  *prometheus.Desc
 	acquireCount *prometheus.Desc
+	acquireWait  *prometheus.Desc
 }
 
 func NewDatabaseCollector(pool *pgxpool.Pool) *DatabaseCollector {
@@ -44,6 +45,11 @@ func NewDatabaseCollector(pool *pgxpool.Pool) *DatabaseCollector {
 			"Total number of times a connection was acquired",
 			nil, nil,
 		),
+		acquireWait: prometheus.NewDesc(
+			"db_pool_acquire_wait_duration_seconds_total",
+			"Total duration of all connection acquisitions",
+			nil, nil,
+		),
 	}
 }
 
@@ -53,6 +59,7 @@ func (c *DatabaseCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.idleConns
 	ch <- c.activeConns
 	ch <- c.acquireCount
+	ch <- c.acquireWait
 }
 
 func (c *DatabaseCollector) Collect(ch chan<- prometheus.Metric) {
@@ -62,6 +69,7 @@ func (c *DatabaseCollector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(c.idleConns, prometheus.GaugeValue, float64(stats.IdleConns()))
 	ch <- prometheus.MustNewConstMetric(c.activeConns, prometheus.GaugeValue, float64(stats.AcquiredConns()))
 	ch <- prometheus.MustNewConstMetric(c.acquireCount, prometheus.CounterValue, float64(stats.AcquireCount()))
+	ch <- prometheus.MustNewConstMetric(c.acquireWait, prometheus.CounterValue, stats.AcquireDuration().Seconds())
 }
 
 type RedisCollector struct {

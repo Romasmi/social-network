@@ -218,3 +218,4 @@ volumes:
   grafana_data:
 networks:
   social-network:
+    name: social-network

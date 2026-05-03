@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Romasmi/social-network/internal/utils"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
@@ -27,13 +28,35 @@ var (
 		},
 		[]string{"method", "endpoint"},
 	)
+
+	CacheHitsTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "cache_hits_total",
+			Help: "Total number of cache hits.",
+		},
+		[]string{"cache_name"},
+	)
+
+	CacheMissesTotal = promauto.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "cache_misses_total",
+			Help: "Total number of cache misses.",
+		},
+		[]string{"cache_name"},
+	)
 )
 
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
-		rw := &responseWriter{ResponseWriter: w, statusCode: http.StatusOK}
+		var rw *utils.StatusResponseWriter
+		if existing, ok := w.(*utils.StatusResponseWriter); ok {
+			rw = existing
+		} else {
+			rw = utils.NewStatusResponseWriter(w)
+		}
+
 		next.ServeHTTP(rw, r)
 
 		duration := time.Since(start).Seconds()
@@ -45,18 +68,8 @@ func Middleware(next http.Handler) http.Handler {
 			}
 		}
 
-		status := strconv.Itoa(rw.statusCode)
+		status := strconv.Itoa(rw.StatusCode)
 		HttpRequestsTotal.WithLabelValues(r.Method, path, status).Inc()
 		HttpRequestDuration.WithLabelValues(r.Method, path).Observe(duration)
 	})
-}
-
-type responseWriter struct {
-	http.ResponseWriter
-	statusCode int
-}
-
-func (rw *responseWriter) WriteHeader(code int) {
-	rw.statusCode = code
-	rw.ResponseWriter.WriteHeader(code)
 }
