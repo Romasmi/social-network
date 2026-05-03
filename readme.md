@@ -90,11 +90,15 @@ Name | birdate | Profile
 ### Load testing via K6
 #### Search user
 ```shell
- k6 run --vus 1000 --duration 30s -e TOKEN=<token> load_testing/user_search.js
+make k6-search TOKEN=<token>
+```
+#### Get user
+```shell
+make k6-get-user TOKEN=<token>
 ```
 #### Feed cache
 ```shell
-k6 run --vus 1000 --duration 30s -e TOKEN="019b6a77-8c9f-7cf8-9a48-f8bd6a714be8" load_testing/get_feed.js
+make k6-feed TOKEN=<token>
 ```
 
 ## Caching

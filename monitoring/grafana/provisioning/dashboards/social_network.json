@@ -36,7 +36,7 @@
       },
       "targets": [
         {
-          "expr": "rate(http_requests_total[1m])",
+          "expr": "sum(rate(social_network_http_requests_total[2m])) by (method, endpoint, status)",
           "legendFormat": "{{method}} {{endpoint}} ({{status}})"
         }
       ]
@@ -108,7 +108,7 @@
       },
       "targets": [
         {
-          "expr": "rate(cache_hits_total[1m]) / (rate(cache_hits_total[1m]) + rate(cache_misses_total[1m]))",
+          "expr": "sum(rate(cache_hits_total[2m])) by (cache_name) / (sum(rate(cache_hits_total[2m])) by (cache_name) + sum(rate(cache_misses_total[2m])) by (cache_name))",
           "legendFormat": "{{cache_name}}"
         }
       ]
@@ -130,6 +130,46 @@
         {
           "expr": "rate(db_pool_acquire_wait_duration_seconds_total[1m])",
           "legendFormat": "Wait Duration"
+        }
+      ]
+    },
+    {
+      "title": "Latency p95",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 24
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(social_network_http_request_duration_seconds_bucket[5m])) by (le, endpoint))",
+          "legendFormat": "{{endpoint}}"
+        }
+      ]
+    },
+    {
+      "title": "Worker Processed Events",
+      "type": "timeseries",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "Prometheus"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(social_network_worker_processed_events_total[2m])) by (event_type, status)",
+          "legendFormat": "{{event_type}} ({{status}})"
         }
       ]
     }

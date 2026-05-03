@@ -27,3 +27,12 @@ dummy-data: import-users
 	echo "  \"password\": \"password\""; \
 	echo "}"; \
 	echo "";
+
+k6-search:
+	k6 run --vus 1000 --duration 5m -e TOKEN=$(TOKEN) load_testing/user_search.js
+
+k6-get-user:
+	k6 run --vus 1000 --duration 5m -e TOKEN=$(TOKEN) load_testing/user_get.js
+
+k6-feed:
+	k6 run --vus 1000 --duration 5m -e TOKEN=$(TOKEN) load_testing/get_feed.js

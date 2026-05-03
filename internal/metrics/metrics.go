@@ -14,7 +14,7 @@ import (
 var (
 	HttpRequestsTotal = promauto.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "http_requests_total",
+			Name: "social_network_http_requests_total",
 			Help: "Total number of HTTP requests.",
 		},
 		[]string{"method", "endpoint", "status"},
@@ -22,7 +22,7 @@ var (
 
 	HttpRequestDuration = promauto.NewHistogramVec(
 		prometheus.HistogramOpts{
-			Name:    "http_request_duration_seconds",
+			Name:    "social_network_http_request_duration_seconds",
 			Help:    "Duration of HTTP requests in seconds.",
 			Buckets: prometheus.DefBuckets,
 		},
@@ -59,9 +59,13 @@ func Middleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(rw, r)
 
+		path := r.URL.Path
+		if path == "/metrics" {
+			return
+		}
+
 		duration := time.Since(start).Seconds()
 
-		path := r.URL.Path
 		if route := mux.CurrentRoute(r); route != nil {
 			if tpl, err := route.GetPathTemplate(); err == nil && tpl != "" {
 				path = tpl

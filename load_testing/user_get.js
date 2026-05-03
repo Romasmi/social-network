@@ -13,10 +13,7 @@ export const options = {
 
 export default function () {
     const user = data[Math.floor(Math.random() * data.length)];
-    const firstName = user.first_name.substring(0, 3);
-    const lastName = user.last_name.substring(0, 3);
-
-    const url = `${__ENV.BASE_URL || "http://api.localhost"}/user/search?first_name=${firstName}&last_name=${lastName}`;
+    const url = `${__ENV.BASE_URL || "http://api.localhost"}/user/get/${user.user_id}`;
 
     const params = {
         headers: {

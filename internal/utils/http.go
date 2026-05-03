@@ -30,7 +30,11 @@ func SuccessJsonResponse(w http.ResponseWriter, output interface{}) {
 
 func JsonError(w http.ResponseWriter, statusCode int, err error) {
 	w.WriteHeader(statusCode)
-	_ = json.NewEncoder(w).Encode(&ErrorResponse{Error: err.Error()})
+	msg := "internal error"
+	if err != nil {
+		msg = err.Error()
+	}
+	_ = json.NewEncoder(w).Encode(&ErrorResponse{Error: msg})
 }
 
 func JsonErrorNotFound(w http.ResponseWriter) {

@@ -28,7 +28,7 @@ func (m *AuthMiddleware) Process(next http.Handler) http.Handler {
 		authHeader := r.Header.Get("Authorization")
 		authFields := strings.Fields(authHeader)
 		if len(authFields) != 2 || authFields[0] != "Bearer" {
-			utils.JsonError(w, http.StatusForbidden, nil)
+			utils.JsonError(w, http.StatusForbidden, fmt.Errorf("invalid authorization header"))
 			return
 		}
 		token := authFields[1]
@@ -43,8 +43,10 @@ func (m *AuthMiddleware) Process(next http.Handler) http.Handler {
 		if isValidSession, session, err = m.SessionService.IsValidSession(r.Context(), sessionId); isValidSession == false || err != nil {
 			if err != nil {
 				fmt.Printf("error while check session: %v\n", err)
+				utils.JsonError(w, http.StatusForbidden, err)
+			} else {
+				utils.JsonError(w, http.StatusForbidden, fmt.Errorf("session is invalid or expired"))
 			}
-			utils.JsonError(w, http.StatusForbidden, nil)
 			return
 		}
 		ctx := context.WithValue(r.Context(), "profileId", session.ProfileId.String())

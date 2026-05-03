@@ -11,6 +11,7 @@ import (
 	"github.com/Romasmi/social-network/internal/events"
 	"github.com/Romasmi/social-network/internal/events/events_registry"
 	"github.com/Romasmi/social-network/internal/infra/kafka_client"
+	"github.com/Romasmi/social-network/internal/metrics"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 )
 
@@ -131,23 +132,31 @@ func (c *ConsumerImpl) processMessageWithRetry(ctx context.Context, msg *kafka.M
 }
 
 func (c *ConsumerImpl) processMessage(ctx context.Context, msg *kafka.Message) error {
+	start := time.Now()
 	processCtx, cancel := context.WithTimeout(ctx, c.config.ProcessingTimeout)
 	defer cancel()
 
 	event, err := events.FromJSON(msg.Value)
 	if err != nil {
+		metrics.WorkerProcessedEventsTotal.WithLabelValues("unknown", "deserialize_error").Inc()
 		return fmt.Errorf("failed to deserialize event: %w", err)
 	}
+
+	defer func() {
+		metrics.WorkerProcessingDuration.WithLabelValues(string(event.Type)).Observe(time.Since(start).Seconds())
+	}()
 
 	handlers := c.registry.GetHandlers(event.Type)
 	if len(handlers) == 0 {
 		log.Printf("No handlers registered for event type: %s", event.Type)
+		metrics.WorkerProcessedEventsTotal.WithLabelValues(string(event.Type), "no_handlers").Inc()
 		return nil
 	}
 
 	var handlerErrors []error
 	for idx, handler := range handlers {
 		if err := processCtx.Err(); err != nil {
+			metrics.WorkerProcessedEventsTotal.WithLabelValues(string(event.Type), "context_cancelled").Inc()
 			return fmt.Errorf("context cancelled before handler %d: %w", idx, err)
 		}
 
@@ -160,8 +169,11 @@ func (c *ConsumerImpl) processMessage(ctx context.Context, msg *kafka.Message) e
 	}
 
 	if len(handlerErrors) > 0 {
+		metrics.WorkerProcessedEventsTotal.WithLabelValues(string(event.Type), "handler_error").Inc()
 		return fmt.Errorf("handlers failed: %v", handlerErrors)
 	}
+
+	metrics.WorkerProcessedEventsTotal.WithLabelValues(string(event.Type), "success").Inc()
 	return nil
 }
 

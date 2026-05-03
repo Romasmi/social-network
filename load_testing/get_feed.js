@@ -3,12 +3,12 @@ import { sleep } from "k6";
 import { check } from "k6";
 
 export default function () {
-    const url = "http://localhost:8000/post/feed?offset=0&limit=20";
+    const url = `${__ENV.BASE_URL || "http://api.localhost"}/post/feed?offset=0&limit=20`;
 
     const params = {
         headers: {
-            Accept: "application/json",
-            Authorization: "Bearer " + __ENV.TOKEN,
+            "Accept": "application/json",
+            "Authorization": "Bearer " + __ENV.TOKEN,
         },
     };
 
