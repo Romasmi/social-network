@@ -28,12 +28,15 @@ it returns registered user data like:
 
 Service URLs
 
-| service  | url                  |                          
-|----------|----------------------|
-| API      | http://api.localhost |
-| Redis UI | http://redis-insight.localhost |
-| Kafka UI | http://kafka-ui.localhost |
-| Traefik  | http://localhost:8080 |
+| service    | url                             |                          
+|------------|---------------------------------|
+| API        | http://api.localhost            |
+| Redis UI   | http://redis-insight.localhost  |
+| Kafka UI   | http://kafka-ui.localhost       |
+| Traefik    | http://localhost:8080           |
+| Prometheus | http://prometheus.localhost     |
+| Grafana    | http://grafana.localhost        |
+
 
 ## Initial requirements
 ### Functional

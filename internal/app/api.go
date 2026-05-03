@@ -6,9 +6,11 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/Romasmi/social-network/internal/metrics"
 	"github.com/Romasmi/social-network/internal/routes"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Api struct {
@@ -19,6 +21,10 @@ type Api struct {
 
 func NewApi(app *App) *Api {
 	api := &Api{App: app}
+
+	prometheus.MustRegister(metrics.NewDatabaseCollector(app.DbConn.DB))
+	prometheus.MustRegister(metrics.NewRedisCollector(app.RedisConn.Rdb))
+
 	api.init()
 	return api
 }

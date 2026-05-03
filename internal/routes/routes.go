@@ -7,9 +7,11 @@ import (
 	"github.com/Romasmi/social-network/internal/events/publisher"
 	"github.com/Romasmi/social-network/internal/infra/database"
 	"github.com/Romasmi/social-network/internal/infra/redis_client"
+	"github.com/Romasmi/social-network/internal/metrics"
 	"github.com/Romasmi/social-network/internal/middleware"
 	"github.com/Romasmi/social-network/internal/utils"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type App interface {
@@ -30,7 +32,10 @@ func RegisterRoutes(
 		panic("router must be initialized before routes registration")
 	}
 	router.Use(middleware.ResponseHeadersMiddleware)
+	router.Use(metrics.Middleware)
 	router.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
+
+	router.Handle("/metrics", promhttp.Handler()).Methods(http.MethodGet)
 
 	RegisterAuthHandlers(router, app.GetDB().DB)
 	RegisterUserRoutes(router, app.GetDB().DB, app.GetPublisher())
