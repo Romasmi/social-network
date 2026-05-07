@@ -1,7 +1,10 @@
 server:
   port: 8000
 database:
-  url: postgres://user:password@db.docker.localhost:5432/social_network?sslmode=disable
+  masterUrl: postgres://user:password@db.docker.localhost:5432/social_network?sslmode=disable
+  slaveUrls:
+    - postgres://user:password@db-slave-1.docker.localhost:5433/social_network?sslmode=disable
+    - postgres://user:password@db-slave-2.docker.localhost:5434/social_network?sslmode=disable
   maxConnections: 100
   minConnection: 2
   maxConnectionLifetime: 60 # seconds

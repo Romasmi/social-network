@@ -31,6 +31,40 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  db-slave-1:
+    image: "postgres:16-alpine"
+    container_name: "social-network-db-slave-1"
+    restart: unless-stopped
+    volumes:
+      - db-slave-1:/var/lib/postgresql/data
+    networks:
+      - social-network
+    env_file:
+      - .env
+    ports:
+      - 5433:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  db-slave-2:
+    image: "postgres:16-alpine"
+    container_name: "social-network-db-slave-2"
+    restart: unless-stopped
+    volumes:
+      - db-slave-2:/var/lib/postgresql/data
+    networks:
+      - social-network
+    env_file:
+      - .env
+    ports:
+      - 5434:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   redis:
     image: "redis:alpine3.22"
     container_name: "social-network-redis"
@@ -212,6 +246,8 @@ services:
 
 volumes:
   db:
+  db-slave-1:
+  db-slave-2:
   redis:
   kafka-data:
   prometheus_data:
