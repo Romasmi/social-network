@@ -22,7 +22,7 @@ type ImportHandler struct {
 }
 
 type App interface {
-	GetDB() *database.Connection
+	GetWriter() *database.Connection
 	GetPublisher() publisher.Publisher
 }
 
@@ -87,13 +87,16 @@ func RegisterCommands(cmd *cobra.Command, app App) {
 }
 
 func CreateImportHandler(app App) *ImportHandler {
-	postRepo := posts_repository.CreatePostsRepository(app.GetDB().DB)
+	writer := app.GetWriter().Writer()
+	reader := app.GetWriter().Reader()
+
+	postRepo := posts_repository.CreatePostsRepository(writer, reader)
 	postService := services.CreatePostService(postRepo, app.GetPublisher())
 
-	cityRepo := repository.CreateCityRepository(app.GetDB().DB)
-	profileRepo := repository.CreateProfileRepository(app.GetDB().DB)
-	profileFriendsRepo := repository.CreateProfileFriendsRepository(app.GetDB().DB)
-	uow := repository.CreateUnitOfWork(app.GetDB().DB)
+	cityRepo := repository.CreateCityRepository(writer, reader)
+	profileRepo := repository.CreateProfileRepository(writer, reader)
+	profileFriendsRepo := repository.CreateProfileFriendsRepository(writer, reader)
+	uow := repository.CreateUnitOfWork(writer, reader)
 	userService := services.CreateUserService(cityRepo, profileRepo, profileFriendsRepo, uow, app.GetPublisher())
 
 	return &ImportHandler{

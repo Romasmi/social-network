@@ -17,7 +17,8 @@ type Config struct {
 }
 
 type Database struct {
-	URL                   string
+	MasterURL             string
+	SlaveURLs             []string
 	MaxConnections        uint
 	MinConnections        uint
 	MaxConnectionLifetime uint

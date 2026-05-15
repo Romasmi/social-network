@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sync/atomic"
 	"time"
 
 	"github.com/Romasmi/social-network/internal/config"
@@ -13,14 +14,34 @@ import (
 )
 
 type Connection struct {
-	DB     *pgxpool.Pool
+	Master *pgxpool.Pool
+	Slaves []*pgxpool.Pool
 	Config *config.Database
+	next   atomic.Uint64
 }
 
 func (c *Connection) Connect() error {
-	pgConfig, err := pgxpool.ParseConfig(c.Config.URL)
+	var err error
+	c.Master, err = c.connectToURL(c.Config.MasterURL)
 	if err != nil {
-		return fmt.Errorf("unable to parse database URL: %w", err)
+		return fmt.Errorf("failed to connect to master database: %w", err)
+	}
+
+	for _, url := range c.Config.SlaveURLs {
+		slave, err := c.connectToURL(url)
+		if err != nil {
+			return fmt.Errorf("failed to connect to slave database (%s): %w", url, err)
+		}
+		c.Slaves = append(c.Slaves, slave)
+	}
+
+	return nil
+}
+
+func (c *Connection) connectToURL(url string) (*pgxpool.Pool, error) {
+	pgConfig, err := pgxpool.ParseConfig(url)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse database URL: %w", err)
 	}
 	pgConfig.MaxConns = int32(c.Config.MaxConnections)
 	pgConfig.MinConns = int32(c.Config.MinConnections)
@@ -30,27 +51,39 @@ func (c *Connection) Connect() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	c.DB, err = pgxpool.NewWithConfig(ctx, pgConfig)
+	pool, err := pgxpool.NewWithConfig(ctx, pgConfig)
 	if err != nil {
-		return fmt.Errorf("unable to connect to database: %w", err)
+		return nil, fmt.Errorf("unable to connect to database: %w", err)
 	}
 
-	if err := c.Ping(); err != nil {
-		return fmt.Errorf("unable to ping database: %w", err)
+	if err := pool.Ping(ctx); err != nil {
+		return nil, fmt.Errorf("unable to ping database: %w", err)
 	}
 
-	return nil
+	return pool, nil
 }
 
 func (c *Connection) Close() {
-	if c.DB != nil {
-		c.DB.Close()
-		log.Println("database connection closed")
+	if c.Master != nil {
+		c.Master.Close()
+		log.Println("master database connection closed")
+	}
+	for i, slave := range c.Slaves {
+		if slave != nil {
+			slave.Close()
+			log.Printf("slave database connection %d closed", i+1)
+		}
 	}
 }
 
-func (c *Connection) Ping() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-	return c.DB.Ping(ctx)
+func (c *Connection) Writer() *pgxpool.Pool {
+	return c.Master
+}
+
+func (c *Connection) Reader() *pgxpool.Pool {
+	if len(c.Slaves) == 0 {
+		return c.Master
+	}
+	idx := c.next.Add(1) % uint64(len(c.Slaves))
+	return c.Slaves[idx]
 }

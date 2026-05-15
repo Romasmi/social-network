@@ -22,7 +22,7 @@ type App struct {
 	server          *http.Server
 }
 
-func (a *App) GetDB() *database.Connection {
+func (a *App) GetWriter() *database.Connection {
 	return a.DbConn
 }
 
@@ -78,14 +78,9 @@ func (a *App) Shutdown(ctx context.Context) error {
 		}
 	}
 
-	if a.DbConn != nil && a.DbConn.DB != nil {
+	if a.DbConn != nil {
 		fmt.Println("Closing database connections...")
-		select {
-		case <-ctx.Done():
-			fmt.Println("Shutdown timeout reached, forcing database close")
-		default:
-			a.DbConn.DB.Close()
-		}
+		a.DbConn.Close()
 	}
 
 	if a.Publisher.Flush(time.Minute*3) != nil {

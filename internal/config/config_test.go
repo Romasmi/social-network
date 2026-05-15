@@ -12,7 +12,9 @@ func TestLoadConfig(t *testing.T) {
 
 	configFile := `
 database:
-  url: postgres://user:pass@localhost:5432/app
+  masterUrl: postgres://user:pass@localhost:5432/app
+  slaveUrls:
+    - postgres://user:pass@localhost:5433/app
   maxConnections: 10
   minConnection: 2
   maxConnectionLifetime: 60 # seconds

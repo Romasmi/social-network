@@ -15,13 +15,14 @@ import (
 )
 
 type ProfileRepository struct {
-	db DBQuerier
+	writer DBQuerier
+	reader DBQuerier
 }
 
 const profilesTable = "profiles"
 
-func CreateProfileRepository(db DBQuerier) *ProfileRepository {
-	return &ProfileRepository{db: db}
+func CreateProfileRepository(writer DBQuerier, reader DBQuerier) *ProfileRepository {
+	return &ProfileRepository{writer: writer, reader: reader}
 }
 
 func (r *ProfileRepository) CreateProfile(ctx context.Context, profileModel *profile.Profile) (*profile.Profile, error) {
@@ -33,7 +34,7 @@ func (r *ProfileRepository) CreateProfile(ctx context.Context, profileModel *pro
 	sql := fmt.Sprintf(query, profilesTable)
 
 	newProfile := &profile.Profile{}
-	err := r.db.QueryRow(
+	err := r.writer.QueryRow(
 		ctx,
 		sql,
 		profileModel.ID,
@@ -76,7 +77,7 @@ func (r *ProfileRepository) GetProfileByProfileId(ctx context.Context, profileId
 	sql := fmt.Sprintf(query, profilesTable)
 
 	profile := &profile.Profile{}
-	err := r.db.QueryRow(ctx, sql, profileId).Scan(
+	err := r.reader.QueryRow(ctx, sql, profileId).Scan(
 		&profile.ID,
 		&profile.UserId,
 		&profile.FirstName,
@@ -122,7 +123,7 @@ func (r *ProfileRepository) SearchProfile(ctx context.Context, queryParams *prof
 		LIMIT 100;
 	`
 
-	rows, err := r.db.Query(ctx, query, args...)
+	rows, err := r.reader.Query(ctx, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search profiles: %w", err)
 	}

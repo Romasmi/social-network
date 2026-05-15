@@ -8,17 +8,17 @@ import (
 	"github.com/Romasmi/social-network/internal/domain/session"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type SessionRepository struct {
-	db *pgxpool.Pool
+	writer DBQuerier
+	reader DBQuerier
 }
 
 const sessionsTable = "sessions"
 
-func CreateSessionRepository(db *pgxpool.Pool) *SessionRepository {
-	return &SessionRepository{db: db}
+func CreateSessionRepository(writer DBQuerier, reader DBQuerier) *SessionRepository {
+	return &SessionRepository{writer: writer, reader: reader}
 }
 
 func (r *SessionRepository) CreateSession(ctx context.Context, s *session.Session) (*session.Session, error) {
@@ -30,7 +30,7 @@ func (r *SessionRepository) CreateSession(ctx context.Context, s *session.Sessio
 	sql := fmt.Sprintf(query, sessionsTable)
 
 	created := &session.Session{}
-	err := r.db.QueryRow(ctx, sql, s.ID, s.UserId, s.Metadata, s.ExpiresAt).Scan(
+	err := r.writer.QueryRow(ctx, sql, s.ID, s.UserId, s.Metadata, s.ExpiresAt).Scan(
 		&created.ID,
 		&created.UserId,
 		&created.Metadata,
@@ -54,7 +54,7 @@ func (r *SessionRepository) GetSessionById(ctx context.Context, id uuid.UUID) (*
 	sql := fmt.Sprintf(query, sessionsTable)
 
 	s := &session.Session{}
-	err := r.db.QueryRow(ctx, sql, id).Scan(
+	err := r.reader.QueryRow(ctx, sql, id).Scan(
 		&s.ID,
 		&s.UserId,
 		&s.Metadata,

@@ -22,7 +22,7 @@ type Api struct {
 func NewApi(app *App) *Api {
 	api := &Api{App: app}
 
-	prometheus.MustRegister(metrics.NewDatabaseCollector(app.DbConn.DB))
+	prometheus.MustRegister(metrics.NewDatabaseCollector(app.GetWriter().Writer()))
 	prometheus.MustRegister(metrics.NewRedisCollector(app.RedisConn.Rdb))
 
 	api.init()

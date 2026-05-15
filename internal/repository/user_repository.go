@@ -13,13 +13,14 @@ import (
 )
 
 type UserRepository struct {
-	db DBQuerier
+	writer DBQuerier
+	reader DBQuerier
 }
 
 const usersTable = "users"
 
-func CreateUserRepository(db DBQuerier) *UserRepository {
-	return &UserRepository{db: db}
+func CreateUserRepository(writer DBQuerier, reader DBQuerier) *UserRepository {
+	return &UserRepository{writer: writer, reader: reader}
 }
 
 func (r *UserRepository) CreateUser(ctx context.Context, userModel *user.User) (*user.User, error) {
@@ -31,7 +32,7 @@ func (r *UserRepository) CreateUser(ctx context.Context, userModel *user.User) (
 	sql := fmt.Sprintf(query, usersTable)
 
 	newUser := &user.User{}
-	err := r.db.QueryRow(ctx, sql, userModel.ID, userModel.Email, userModel.PasswordHash).Scan(
+	err := r.writer.QueryRow(ctx, sql, userModel.ID, userModel.Email, userModel.PasswordHash).Scan(
 		&userModel.ID,
 		&userModel.Email,
 		&userModel.PasswordHash,
@@ -60,7 +61,7 @@ func (r *UserRepository) GetUserById(ctx context.Context, userId uuid.UUID) (*us
 	sql := fmt.Sprintf(query, usersTable)
 
 	userModel := &user.User{}
-	err := r.db.QueryRow(ctx, sql, userId).Scan(
+	err := r.reader.QueryRow(ctx, sql, userId).Scan(
 		&userModel.ID,
 		&userModel.Email,
 		&userModel.PasswordHash,
@@ -83,7 +84,7 @@ func (r *UserRepository) GetUserByProfileId(ctx context.Context, profileId uuid.
 	`
 	sql := fmt.Sprintf(query, usersTable, profilesTable)
 	user := &user.User{}
-	err := r.db.QueryRow(ctx, sql, profileId).Scan(
+	err := r.reader.QueryRow(ctx, sql, profileId).Scan(
 		&user.ID,
 		&user.Email,
 		&user.PasswordHash,

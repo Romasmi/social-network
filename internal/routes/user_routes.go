@@ -9,16 +9,15 @@ import (
 	"github.com/Romasmi/social-network/internal/repository"
 	"github.com/Romasmi/social-network/internal/services"
 	"github.com/gorilla/mux"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func RegisterUserRoutes(r *mux.Router, db *pgxpool.Pool, publisher publisher.Publisher) {
-	cityRepo := repository.CreateCityRepository(db)
-	profileRepo := repository.CreateProfileRepository(db)
-	profileFriendsRepo := repository.CreateProfileFriendsRepository(db)
-	sessionRepo := repository.CreateSessionRepository(db)
+func RegisterUserRoutes(r *mux.Router, writer, reader repository.DBQuerier, publisher publisher.Publisher) {
+	cityRepo := repository.CreateCityRepository(writer, reader)
+	profileRepo := repository.CreateProfileRepository(writer, reader)
+	profileFriendsRepo := repository.CreateProfileFriendsRepository(writer, reader)
+	sessionRepo := repository.CreateSessionRepository(writer, reader)
 
-	uow := repository.CreateUnitOfWork(db)
+	uow := repository.CreateUnitOfWork(writer, reader)
 
 	userService := services.CreateUserService(cityRepo, profileRepo, profileFriendsRepo, uow, publisher)
 	sessionService := services.CreateSessionService(sessionRepo)

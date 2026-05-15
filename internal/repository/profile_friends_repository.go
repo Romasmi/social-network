@@ -10,14 +10,16 @@ import (
 )
 
 type ProfileFriendsRepository struct {
-	db DBQuerier
+	writer DBQuerier
+	reader DBQuerier
 }
 
 const ProfileFriendsTable = "profile_friends"
 
-func CreateProfileFriendsRepository(db DBQuerier) *ProfileFriendsRepository {
+func CreateProfileFriendsRepository(writer DBQuerier, reader DBQuerier) *ProfileFriendsRepository {
 	return &ProfileFriendsRepository{
-		db: db,
+		writer: writer,
+		reader: reader,
 	}
 }
 
@@ -29,7 +31,7 @@ func (r *ProfileFriendsRepository) SetFriend(ctx context.Context, profile1Id, pr
 	`
 	sql := fmt.Sprintf(query, ProfileFriendsTable)
 
-	_, err := r.db.Exec(
+	_, err := r.writer.Exec(
 		ctx,
 		sql,
 		profile1Id,
@@ -46,7 +48,7 @@ func (r *ProfileFriendsRepository) DeleteFriend(ctx context.Context, profile1Id,
 	`
 	sql := fmt.Sprintf(query, ProfileFriendsTable)
 
-	_, err := r.db.Exec(
+	_, err := r.writer.Exec(
 		ctx,
 		sql,
 		profile1Id,
@@ -66,7 +68,7 @@ func (r *ProfileFriendsRepository) GetFriendsIds(ctx context.Context, profileID 
 			WHERE profile2_id = $1
 	`
 	sql := fmt.Sprintf(query, ProfileFriendsTable, ProfileFriendsTable)
-	rows, err := r.db.Query(ctx, sql, profileID)
+	rows, err := r.reader.Query(ctx, sql, profileID)
 	if rows != nil {
 		defer rows.Close()
 	}

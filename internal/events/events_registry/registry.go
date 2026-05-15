@@ -21,11 +21,11 @@ type EventRegistryImpl struct {
 	handlers map[events.EventType][]EventHandler
 }
 
-func NewEventRegistry(db repository.DBQuerier, redis *redis.Client) EventRegistry {
+func NewEventRegistry(writer, reader repository.DBQuerier, redis *redis.Client) EventRegistry {
 	r := &EventRegistryImpl{
 		handlers: make(map[events.EventType][]EventHandler),
 	}
-	r.registerEventHandlers(db, redis)
+	r.registerEventHandlers(writer, reader, redis)
 	return r
 }
 
@@ -37,10 +37,10 @@ func (r *EventRegistryImpl) GetHandlers(eventType events.EventType) []EventHandl
 	return r.handlers[eventType]
 }
 
-func (r *EventRegistryImpl) registerEventHandlers(db repository.DBQuerier, redis *redis.Client) {
-	profileFriendsRepo := repository.CreateProfileFriendsRepository(db)
+func (r *EventRegistryImpl) registerEventHandlers(writer, reader repository.DBQuerier, redis *redis.Client) {
+	profileFriendsRepo := repository.CreateProfileFriendsRepository(writer, reader)
 	postsCache := posts_repository.NewPostsCache(redis)
-	postsRepository := posts_repository.CreateCachedPostsRepository(posts_repository.CreatePostsRepository(db), redis)
+	postsRepository := posts_repository.CreateCachedPostsRepository(posts_repository.CreatePostsRepository(writer, reader), redis)
 
 	postHandler := eventhandler.CreatePostEventsHandler(profileFriendsRepo, postsCache)
 	profileHandler := eventhandler.CreateProfileEventHandler(profileFriendsRepo, postsCache, postsRepository)

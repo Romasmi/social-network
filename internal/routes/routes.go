@@ -15,7 +15,7 @@ import (
 )
 
 type App interface {
-	GetDB() *database.Connection
+	GetWriter() *database.Connection
 	GetRedis() *redis_client.Connection
 	GetPublisher() publisher.Publisher
 }
@@ -38,9 +38,12 @@ func RegisterRoutes(
 
 	router.Handle("/metrics", promhttp.Handler()).Methods(http.MethodGet)
 
-	RegisterAuthHandlers(router, app.GetDB().DB)
-	RegisterUserRoutes(router, app.GetDB().DB, app.GetPublisher())
-	RegisterPostRoutes(router, app.GetDB().DB, app.GetRedis().Rdb, app.GetPublisher())
+	writer := app.GetWriter().Writer()
+	reader := app.GetWriter().Reader()
+
+	RegisterAuthHandlers(router, writer, reader)
+	RegisterUserRoutes(router, writer, reader, app.GetPublisher())
+	RegisterPostRoutes(router, writer, reader, app.GetRedis().Rdb, app.GetPublisher())
 }
 
 func NotFoundHandler(w http.ResponseWriter, r *http.Request) {

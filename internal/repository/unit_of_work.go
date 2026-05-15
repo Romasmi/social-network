@@ -18,23 +18,24 @@ type UnitOfWork interface {
 }
 
 type UnitOfWorkImpl struct {
-	db DBQuerier
+	writer DBQuerier
+	reader DBQuerier
 }
 
-func CreateUnitOfWork(db *pgxpool.Pool) UnitOfWork {
-	return &UnitOfWorkImpl{db: db}
+func CreateUnitOfWork(writer DBQuerier, reader DBQuerier) UnitOfWork {
+	return &UnitOfWorkImpl{writer: writer, reader: reader}
 }
 
 func (u *UnitOfWorkImpl) User() *UserRepository {
-	return CreateUserRepository(u.db)
+	return CreateUserRepository(u.writer, u.reader)
 }
 
 func (u *UnitOfWorkImpl) Profile() *ProfileRepository {
-	return CreateProfileRepository(u.db)
+	return CreateProfileRepository(u.writer, u.reader)
 }
 
 func (u *UnitOfWorkImpl) WithTransaction(ctx context.Context, fn func(ctx context.Context, txUoW UnitOfWork) error) error {
-	pool, ok := u.db.(*pgxpool.Pool)
+	pool, ok := u.writer.(*pgxpool.Pool)
 	if !ok {
 		return fn(ctx, u)
 	}
@@ -55,7 +56,7 @@ func (u *UnitOfWorkImpl) WithTransaction(ctx context.Context, fn func(ctx contex
 		}
 	}()
 
-	txUoW := &UnitOfWorkImpl{db: transaction}
+	txUoW := &UnitOfWorkImpl{writer: transaction, reader: transaction}
 	if err := fn(ctx, txUoW); err != nil {
 		localErr := transaction.Rollback(ctx)
 		if localErr != nil {

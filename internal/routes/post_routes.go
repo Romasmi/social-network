@@ -10,16 +10,15 @@ import (
 	"github.com/Romasmi/social-network/internal/repository/posts_repository"
 	"github.com/Romasmi/social-network/internal/services"
 	"github.com/gorilla/mux"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 )
 
-func RegisterPostRoutes(r *mux.Router, db *pgxpool.Pool, rds *redis.Client, publisher publisher.Publisher) {
+func RegisterPostRoutes(r *mux.Router, writer, reader repository.DBQuerier, rds *redis.Client, publisher publisher.Publisher) {
 	postsRepo := posts_repository.CreateCachedPostsRepository(
-		posts_repository.CreatePostsRepository(db),
+		posts_repository.CreatePostsRepository(writer, reader),
 		rds,
 	)
-	sessionRepo := repository.CreateSessionRepository(db)
+	sessionRepo := repository.CreateSessionRepository(writer, reader)
 
 	postService := services.CreatePostService(postsRepo, publisher)
 	sessionService := services.CreateSessionService(sessionRepo)

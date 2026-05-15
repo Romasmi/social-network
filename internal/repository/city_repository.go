@@ -7,17 +7,17 @@ import (
 
 	"github.com/Romasmi/social-network/internal/domain/city"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type CityRepository struct {
-	db *pgxpool.Pool
+	writer DBQuerier
+	reader DBQuerier
 }
 
 const citiesTable = "cities"
 
-func CreateCityRepository(db *pgxpool.Pool) *CityRepository {
-	return &CityRepository{db: db}
+func CreateCityRepository(writer DBQuerier, reader DBQuerier) *CityRepository {
+	return &CityRepository{writer: writer, reader: reader}
 }
 
 // GetCityByName For simplicity assume that each city name is unique so it can return city by only single name
@@ -31,7 +31,7 @@ func (r *CityRepository) GetCityByName(ctx context.Context, name string) (*city.
 	sql := fmt.Sprintf(query, citiesTable)
 
 	cityModel := &city.City{}
-	err := r.db.QueryRow(ctx, sql, name).Scan(
+	err := r.reader.QueryRow(ctx, sql, name).Scan(
 		&cityModel.ID,
 		&cityModel.Name,
 		&cityModel.CountryCode,
@@ -55,7 +55,7 @@ func (r *CityRepository) CreateCity(ctx context.Context, cityModel *city.City) (
 	`
 	sql := fmt.Sprintf(query, citiesTable)
 	created := &city.City{}
-	err := r.db.QueryRow(ctx, sql, cityModel.ID, cityModel.Name, cityModel.CountryCode, cityModel.StateProvince).Scan(
+	err := r.writer.QueryRow(ctx, sql, cityModel.ID, cityModel.Name, cityModel.CountryCode, cityModel.StateProvince).Scan(
 		&created.ID,
 		&created.Name,
 		&created.CountryCode,

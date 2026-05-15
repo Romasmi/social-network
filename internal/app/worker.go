@@ -23,9 +23,11 @@ func NewWorker(app *App) *Worker {
 }
 
 func (w *Worker) Init(kafkaConn *kafka_client.Connection) {
+	writer := w.app.GetWriter().Writer()
+	reader := w.app.GetWriter().Reader()
 	w.consumer = consumer.NewConsumer(
 		kafkaConn,
-		events_registry.NewEventRegistry(w.app.GetDB().DB, w.app.GetRedis().Rdb),
+		events_registry.NewEventRegistry(writer, reader, w.app.GetRedis().Rdb),
 		consumer.Config{Topics: []string{"social-network-events"}},
 	)
 }

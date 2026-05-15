@@ -24,13 +24,14 @@ type PostsRepository interface {
 }
 
 type postsRepositoryImpl struct {
-	db repository.DBQuerier
+	writer repository.DBQuerier
+	reader repository.DBQuerier
 }
 
 const postsTable = "posts"
 
-func CreatePostsRepository(db repository.DBQuerier) PostsRepository {
-	return &postsRepositoryImpl{db: db}
+func CreatePostsRepository(writer repository.DBQuerier, reader repository.DBQuerier) PostsRepository {
+	return &postsRepositoryImpl{writer: writer, reader: reader}
 }
 
 func (r *postsRepositoryImpl) CreatePost(ctx context.Context, postModel *post.Post) (*post.Post, error) {
@@ -42,7 +43,7 @@ func (r *postsRepositoryImpl) CreatePost(ctx context.Context, postModel *post.Po
 	sql := fmt.Sprintf(query, postsTable)
 
 	created := &post.Post{}
-	err := r.db.QueryRow(ctx, sql, postModel.ID, postModel.ProfileId, postModel.Text).Scan(
+	err := r.writer.QueryRow(ctx, sql, postModel.ID, postModel.ProfileId, postModel.Text).Scan(
 		&created.ID,
 		&created.ProfileId,
 		&created.Text,
@@ -70,7 +71,7 @@ func (r *postsRepositoryImpl) UpdatePost(ctx context.Context, postID uuid.UUID, 
 	sql := fmt.Sprintf(query, postsTable)
 
 	updated := &post.Post{}
-	err := r.db.QueryRow(ctx, sql, newText, postID, profileID).Scan(
+	err := r.writer.QueryRow(ctx, sql, newText, postID, profileID).Scan(
 		&updated.ID,
 		&updated.ProfileId,
 		&updated.Text,
@@ -91,7 +92,7 @@ func (r *postsRepositoryImpl) DeletePost(ctx context.Context, postID uuid.UUID, 
     `
 	sql := fmt.Sprintf(query, postsTable)
 
-	tag, err := r.db.Exec(ctx, sql, postID, profileID)
+	tag, err := r.writer.Exec(ctx, sql, postID, profileID)
 	if err != nil {
 		return err
 	}
@@ -111,7 +112,7 @@ func (r *postsRepositoryImpl) GetPost(ctx context.Context, postID uuid.UUID) (*p
 	sql := fmt.Sprintf(query, postsTable)
 
 	post := &post.Post{}
-	err := r.db.QueryRow(ctx, sql, postID).Scan(
+	err := r.reader.QueryRow(ctx, sql, postID).Scan(
 		&post.ID,
 		&post.ProfileId,
 		&post.Text,
@@ -133,7 +134,7 @@ func (r *postsRepositoryImpl) GetPostsByProfileId(ctx context.Context, profileID
     `
 	sql := fmt.Sprintf(query, postsTable)
 
-	rows, err := r.db.Query(ctx, sql, profileID)
+	rows, err := r.reader.Query(ctx, sql, profileID)
 	return r.rowsToPosts(rows, err)
 }
 
@@ -145,7 +146,7 @@ func (r *postsRepositoryImpl) GetPostsByIds(ctx context.Context, postIDs []uuid.
     `
 	sql := fmt.Sprintf(query, postsTable)
 
-	rows, err := r.db.Query(ctx, sql, postIDs)
+	rows, err := r.reader.Query(ctx, sql, postIDs)
 	return r.rowsToPosts(rows, err)
 }
 
@@ -167,7 +168,7 @@ func (r *postsRepositoryImpl) GetFeed(ctx context.Context, profileID uuid.UUID, 
     `
 	sql := fmt.Sprintf(query, postsTable, repository.ProfileFriendsTable, repository.ProfileFriendsTable)
 
-	rows, err := r.db.Query(ctx, sql, profileID, limit, offset)
+	rows, err := r.reader.Query(ctx, sql, profileID, limit, offset)
 	return r.rowsToPosts(rows, err)
 }
 
